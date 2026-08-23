@@ -1,0 +1,63 @@
+/* ============================================================
+   Ⅳ. 선진사례 검증 (P18 · P19) — 레이아웃 개선 CSS
+   s5_css.css 의 .x / .sl.v5 시스템을 그대로 재사용하고
+   이 두 장에만 필요한 규칙을 추가함
+   ============================================================ */
+
+/* --- P18 사례 비교 매트릭스 --- */
+.sl.v5#sl-p18 .x table{font-size:12.4px}
+.sl.v5#sl-p18 .x th{font-size:11.4px}
+.x td.case{border-left-color:#0E1B6B}
+.x td.case>div{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+.x td.case .lg{display:block;object-fit:contain;object-position:left center;margin-bottom:3px}
+.x td.case b{font-size:12.8px;font-weight:800;color:#0E1B6B;line-height:1.25}
+.x td.case span{font-size:10.8px;color:#68737E;line-height:1.3;font-weight:700}
+
+/* --- P19 위험 등급 피라미드 --- */
+.x .pyrwrap{flex:1;min-height:0;display:grid;grid-template-columns:.72fr 1.28fr;gap:18px}
+
+.x .pyr{position:relative;min-width:0;min-height:0;display:flex;flex-direction:column;gap:3px;
+  }
+.x .pyr .band{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.x .pyr .band b{font-size:19px;font-weight:800;color:#fff;letter-spacing:-.5px;
+  text-shadow:0 1px 2px rgba(0,0,0,.22)}
+.x .pyr .band.b0{align-items:flex-end;padding-bottom:6px}
+.x .pyr .band.b0 b{font-size:15px}
+.x .pyr .band.b1 b{font-size:17px}
+
+/* 사다리꼴 — 위로 갈수록 좁아지는 피라미드 */
+.x .pyr .b0{clip-path:polygon(50% 0, 50% 0, 62.5% 100%, 37.5% 100%)}
+.x .pyr .b1{clip-path:polygon(37.5% 0, 62.5% 0, 75% 100%, 25% 100%)}
+.x .pyr .b2{clip-path:polygon(25% 0, 75% 0, 87.5% 100%, 12.5% 100%)}
+.x .pyr .b3{clip-path:polygon(12.5% 0, 87.5% 0, 100% 100%, 0 100%)}
+
+.x .r4{background:#B4402E}.x .r3{background:#B8792A}
+.x .r2{background:#1428A0}.x .r1{background:#4B649E}
+
+
+/* 우측 등급 설명 — 좌측 밴드와 행 높이를 1:1로 맞춤 */
+.x .lvcol{min-width:0;min-height:0;display:flex;flex-direction:column;gap:3px}
+.x .lvrow{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:4px;
+  background:#fff;border:1px solid #D5DCE8;border-left:5px solid #1428A0;border-radius:0 7px 7px 0;
+  padding:10px 15px}
+.x .lvrow.r4{background:#FCF4F2;border-color:#EBD2CC;border-left-color:#B4402E}
+.x .lvrow.r3{background:#FDF8F0;border-color:#EEE0C9;border-left-color:#B8792A}
+.x .lvrow.r2{background:#F3F6FC;border-color:#D3DEF1;border-left-color:#1428A0}
+.x .lvrow.r1{background:#F7F8FB;border-color:#DDE2EC;border-left-color:#4B649E}
+.x .lvh{display:flex;align-items:center;gap:9px;flex:none}
+.x .lvh b{font-size:10.4px;font-weight:800;letter-spacing:.6px;color:#5B6670}
+.x .lvrow.r4 .lvh b{color:#8E3323}.x .lvrow.r3 .lvh b{color:#8C5C1F}
+.x .lvrow.r2 .lvh b{color:#1428A0}.x .lvrow.r1 .lvh b{color:#3C5183}
+.x .lvh em{font-style:normal;font-size:10px;font-weight:800;padding:3px 9px;border-radius:10px;
+  background:#EEF1F6;color:#4A5768;border:1px solid #DCE1EA}
+.x .lvrow.r4 .lvh em{background:#F6E4E0;color:#8E3323;border-color:#E7CDC7}
+.x .lvrow.r3 .lvh em{background:#F8ECD8;color:#8C5C1F;border-color:#EBDCC0}
+.x .lvrow.r2 .lvh em{background:#E6EDFB;color:#1428A0;border-color:#CBD9F2}
+.x .lvrow strong{font-size:14px;font-weight:800;color:#18213A;line-height:1.28;letter-spacing:-.3px}
+.x .lvrow small{font-size:11.4px;line-height:1.45;color:#56616C;font-weight:700}
+
+@media(max-width:1340px){
+  .x .lvrow strong{font-size:12.4px}
+  .x .lvrow small{font-size:10.4px}
+  .x td.case b{font-size:11.2px}
+}
