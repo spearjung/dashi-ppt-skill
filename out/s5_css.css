@@ -1,0 +1,326 @@
+/* ============================================================
+   V. 추진 방안 (P20~P33) — 레이아웃 개선 CSS
+   기존 .exec 계열은 그대로 두고 .x 네임스페이스로 신규 정의함
+   통합 시 이 <style> 블록만 추가하고 섹션 마크업을 교체하면 됨
+   ============================================================ */
+
+/* --- 슬라이드 캔버스: 도식 영역이 세로를 전부 차지하도록 stretch --- */
+.sl.v5 .fg{align-items:stretch;justify-content:stretch;padding:13px}
+.sl.v5 .msgb{padding:11px 20px 12px;margin:0 0 10px}
+.sl.v5 .msgb li{font-size:14px;line-height:1.52;margin-bottom:4px}
+.sl.v5 .msgb .ezb{margin-top:7px;padding-top:6px}
+.sl.v5 .msgb .ezb li{font-size:11.9px;margin-bottom:2px}
+
+/* --- 루트 --- */
+.x{width:100%;height:100%;min-height:0;display:flex;flex-direction:column;gap:9px;color:#18213A}
+.x *{box-sizing:border-box}
+.x .row{display:flex;gap:9px;min-height:0}
+.x .grow{flex:1;min-height:0}
+.x .g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;min-height:0}
+.x .g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;min-height:0}
+.x .g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;min-height:0}
+.x .g5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;min-height:0}
+.x .gL{display:grid;grid-template-columns:1.15fr .85fr;gap:9px;min-height:0}
+.x .gR{display:grid;grid-template-columns:.82fr 1.18fr;gap:9px;min-height:0}
+
+/* --- 카드 --- */
+.x .c{background:#fff;border:1px solid #D5DCE8;border-radius:8px;min-width:0;min-height:0;
+  display:flex;flex-direction:column;overflow:hidden;box-shadow:0 1px 2px rgba(9,19,41,.05)}
+.x .c>h4{margin:0;background:#0E1B6B;color:#fff;font-size:12.8px;font-weight:800;
+  padding:8px 12px;letter-spacing:-.2px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.x .c>h4 u{text-decoration:none;font-size:10.6px;font-weight:700;color:#A8BCEF;letter-spacing:0}
+.x .c>.b{flex:1;min-height:0;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.x .c.lite>h4{background:#EDF1FA;color:#0E1B6B;border-bottom:1px solid #D9E1F2}
+.x .c.lite>h4 u{color:#5C74B4}
+.x .c.acc{border-top:3px solid #1428A0}
+.x .c.lime>h4{background:#41631A}
+
+/* --- 세로 채움 리스트: 항목이 남는 높이를 균등 분배함 --- */
+.x .li{list-style:none;margin:0;padding:0;flex:1;min-height:0;display:flex;flex-direction:column;gap:6px}
+.x .li.sp{justify-content:space-between}
+.x .li>li{position:relative;padding-left:13px;font-size:12px;line-height:1.45;color:#2C3742;
+  display:flex;align-items:center;min-height:0;min-width:0}
+.x .li>li>span{min-width:0;overflow-wrap:break-word;word-break:break-word}
+.x .li>li:before{content:"";position:absolute;left:0;top:.62em;width:5px;height:5px;border-radius:1px;background:#3B6FD4}
+.x .li.num{counter-reset:n;gap:5px}
+.x .li.num>li{padding-left:26px;align-items:center;border-bottom:1px dashed #E3E8F1;padding-bottom:5px}
+.x .li.num>li:last-child{border-bottom:0;padding-bottom:0}
+.x .li.num>li:before{counter-increment:n;content:counter(n,decimal-leading-zero);
+  width:19px;height:17px;border-radius:4px;background:#EAF0FB;color:#1428A0;
+  font-size:9.4px;font-weight:800;display:flex;align-items:center;justify-content:center;top:50%;transform:translateY(-50%)}
+
+/* --- 태그 칩 --- */
+.x .tags{display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start}
+.x .tags span{font-size:11px;line-height:1.2;padding:5px 9px;border:1px solid #C6D1E6;
+  background:#F5F8FD;color:#183C86;border-radius:11px;font-weight:700}
+.x .tags.re span{border-color:#DCE0D6;background:#F6F7F3;color:#4E5A48}
+.x .tags.hi span{border-color:#B7CDF2;background:#E9F0FC}
+.x .sub{font-size:10.2px;font-weight:800;color:#67738D;letter-spacing:.3px;
+  display:flex;align-items:center;gap:7px;flex:none}
+.x .sub:after{content:"";flex:1;height:1px;background:#E4E8F0}
+.x .note{font-size:10.6px;color:#78838F;line-height:1.4;margin:0}
+
+/* --- KPI 타일 --- */
+.x .kpi{display:grid;gap:8px;flex:none}
+.x .kpi.k3{grid-template-columns:repeat(3,1fr)}
+.x .kpi.k4{grid-template-columns:repeat(4,1fr)}
+.x .kpi>div{border:1px solid #DCE2EC;background:#F8FAFD;border-radius:7px;padding:9px 10px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.x .kpi b{display:block;font-size:17px;color:#0E1B6B;line-height:1.15;font-weight:800;letter-spacing:-.4px}
+.x .kpi span{font-size:10.2px;color:#69736E;margin-top:3px;line-height:1.3}
+.x .kpi>div.on{background:#0E1B6B;border-color:#0E1B6B}
+.x .kpi>div.on b{color:#fff}
+.x .kpi>div.on span{color:#B9C6E8}
+.x .kpi>div.gn{background:#F2F7EA;border-color:#D2E0BA}
+.x .kpi>div.gn b{color:#41631A}
+
+/* --- 콜아웃 --- */
+.x .co{flex:none;background:#E9F0FB;border:1px solid #C4D2EB;border-left:4px solid #1428A0;
+  border-radius:0 7px 7px 0;padding:9px 13px;font-size:11.6px;line-height:1.45;color:#17336F;font-weight:700}
+.x .co.gn{background:#F1F6E9;border-color:#D1E0B8;border-left-color:#86BC25;color:#385611}
+.x .co.dk{background:#0E1B6B;border-color:#0E1B6B;border-left-color:#86BC25;color:#fff}
+
+/* --- 완료 Gate 체크 블록 --- */
+.x .gate{flex:none;background:#F2F7EA;border:1px solid #D2E0BA;border-radius:7px;padding:8px 10px;
+  display:flex;flex-direction:column;gap:5px}
+.x .gate i{font-style:normal;font-size:9.6px;font-weight:800;color:#5C7A2E;letter-spacing:.4px}
+.x .gate p{margin:0;font-size:11.2px;line-height:1.4;color:#37530F;font-weight:700;
+  padding-left:12px;position:relative}
+.x .gate p:before{content:"";position:absolute;left:0;top:.52em;width:5px;height:5px;
+  border-radius:50%;background:#86BC25}
+
+/* 역할·제품 매핑 배지 */
+.x td .bg{display:inline-block;font-size:9.4px;font-weight:800;border-radius:9px;padding:2px 7px;line-height:1.3;white-space:nowrap}
+.x td .bg.n{background:#E9F0FC;color:#1B49A6;border:1px solid #C2D3F0}
+.x td .bg.r{background:#F3F4F0;color:#5A665A;border:1px solid #DCDFD6}
+.x td .bg.o{background:#F2F7EA;color:#4C6B22;border:1px solid #D3E1BC}
+
+/* --- 표: 남는 높이를 행에 분배함 --- */
+.x .tw{flex:1;min-height:0;min-width:0;display:block;overflow:hidden}
+.x table{width:100%;min-width:0;height:100%;border-collapse:collapse;font-size:11.4px;table-layout:fixed}
+.x th{background:#0E1B6B;color:#fff;padding:7px 9px;font-size:10.8px;line-height:1.25;
+  text-align:left;font-weight:700;letter-spacing:-.1px;overflow-wrap:break-word}
+.x td{padding:7px 9px;line-height:1.38;border-bottom:1px solid #E4E7EC;background:#fff;
+  color:#2E3841;vertical-align:middle;overflow-wrap:break-word;word-break:break-word}
+.x tr:last-child td{border-bottom:0}
+.x tr:nth-child(even) td{background:#F8F9FC}
+.x td.k{font-weight:800;color:#0E1B6B;border-left:3px solid #3B6FD4}
+.x td.no{color:#8A9199}
+.x td.gn{color:#41631A;font-weight:700}
+
+/* --- 단계 카드 (P20) --- */
+.x .stg{display:flex;flex-direction:column;min-height:0;min-width:0;background:#fff;
+  border:1px solid #D5DCE8;border-top:4px solid #1428A0;border-radius:8px;overflow:hidden}
+.x .stg.s2{border-top-color:#1D4AA5}.x .stg.s3{border-top-color:#3B6FD4}
+.x .stg.s4{border-top-color:#5A96F5}.x .stg.s5{border-top-color:#86BC25}
+.x .stg>.h{display:flex;align-items:baseline;justify-content:space-between;gap:6px;
+  padding:8px 10px;background:#F2F5FB;border-bottom:1px solid #DCE2EE;flex:none}
+.x .stg>.h b{font-size:12px;color:#1428A0;font-weight:800}
+.x .stg>.h em{font-style:normal;font-size:14.5px;color:#0E1B6B;font-weight:800;letter-spacing:-.4px}
+.x .stg>.b{flex:1;min-height:0;padding:9px 10px;display:flex;flex-direction:column;gap:6px}
+.x .stg .li{flex:none;gap:5px}
+.x .stg .li>li{font-size:11.2px;line-height:1.38;align-items:flex-start}
+.x .stg .li>li:before{top:.5em}
+.x .stg .sub{font-size:9.4px;color:#8390A8}
+.x .stg .stack{border-top:0;padding-top:0}
+.x .stg h3{margin:0;font-size:13.4px;line-height:1.3;color:#0E1B6B;letter-spacing:-.3px;font-weight:800}
+.x .stg .cap{margin:0;font-size:10.7px;line-height:1.4;color:#5B6670}
+.x .stg .chips{display:flex;gap:5px;flex:none}
+.x .stg .chips em{font-style:normal;font-size:10px;color:#34476B;background:#EDF2FA;
+  border-radius:10px;padding:3px 8px;font-weight:800}
+.x .stg .stack{font-size:9.8px;line-height:1.35;color:#67736C;border-top:1px dashed #D6DBE4;
+  padding-top:6px;flex:none}
+.x .stg .gk{flex:none;border-top:1px solid #E4E8F0;padding-top:6px;display:flex;gap:7px;align-items:flex-start}
+.x .stg .gk i{font-style:normal;flex:none;font-size:9.4px;font-weight:800;color:#fff;background:#1428A0;
+  border-radius:4px;padding:3px 6px;line-height:1}
+.x .stg.s5 .gk i{background:#5C7A2E}
+.x .stg .gk span{font-size:10.2px;line-height:1.35;color:#4A5560;font-weight:700}
+
+/* --- 타임라인 레일 (P20) --- */
+.x .rail{flex:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.x .rail>div{position:relative;background:#EAEFF8;border-radius:4px;height:26px;
+  display:flex;align-items:center;justify-content:center;font-size:10.2px;font-weight:800;color:#1428A0}
+.x .rail>div:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;
+  border-radius:4px 0 0 4px;background:#1428A0}
+.x .rail>div.s5:before{background:#86BC25}
+.x .rail>div u{text-decoration:none;color:#6B7A99;font-weight:700;margin-left:7px;font-size:9.6px}
+
+/* --- Gate 레일 (P21) --- */
+.x .grail{flex:1;min-height:0;display:flex;flex-direction:column;gap:0}
+.x .grr{flex:1;min-height:0;display:grid;grid-template-columns:64px 1fr 92px;gap:9px;
+  align-items:center;border-bottom:1px solid #E4E7EC;padding:5px 0}
+.x .grr:last-child{border-bottom:0}
+.x .grr>b{font-size:11.6px;font-weight:800;color:#fff;background:#1428A0;border-radius:5px;
+  padding:5px 0;text-align:center;letter-spacing:-.2px}
+.x .grr.fin>b{background:#5C7A2E}
+.x .grr>div{min-width:0}
+.x .grr strong{display:block;font-size:11.8px;color:#0E1B6B;font-weight:800;line-height:1.3}
+.x .grr small{display:block;font-size:10.5px;color:#5B6670;line-height:1.35;margin-top:2px}
+.x .grr>em{font-style:normal;text-align:center;font-size:10.2px;font-weight:800;color:#1428A0;
+  background:#EAF0FB;border:1px solid #C9D8F2;border-radius:11px;padding:4px 6px}
+
+/* --- 흐름 노드 (P27) --- */
+.x .flow{flex:none;display:flex;gap:14px;align-items:stretch}
+.x .flow>div{flex:1;min-width:0;border:1px solid #D4DBE7;background:#fff;border-radius:8px;
+  padding:9px 10px;position:relative;display:flex;flex-direction:column;justify-content:center;text-align:center}
+.x .flow>div:not(:last-child):after{content:"";position:absolute;right:-11px;top:50%;
+  width:8px;height:8px;border-top:2px solid #3B6FD4;border-right:2px solid #3B6FD4;
+  transform:translateY(-50%) rotate(45deg);z-index:3}
+.x .flow b{font-size:11.6px;color:#0E1B6B;line-height:1.3;font-weight:800}
+.x .flow small{font-size:10px;color:#68736D;line-height:1.35;margin-top:4px}
+.x .flow i{font-style:normal;font-size:9.2px;font-weight:800;color:#3B6FD4;letter-spacing:.5px;margin-bottom:4px}
+
+/* --- 레인 (P31) --- */
+.x .lanes{flex:1;min-height:0;display:flex;flex-direction:column;gap:6px}
+.x .lane{flex:1;min-height:0;display:grid;grid-template-columns:104px repeat(5,minmax(0,1fr));gap:6px}
+.x .lane>div{border:1px solid #DDE2EA;background:#fff;border-radius:6px;padding:5px 6px;
+  font-size:10.6px;line-height:1.3;display:flex;align-items:center;justify-content:center;
+  text-align:center;color:#2E3841}
+.x .lane>.lb{background:#0E1B6B;color:#fff;font-weight:800;font-size:10.6px}
+.x .lane>.on{background:#EAF0FA;color:#1428A0;font-weight:800}
+.x .lane>.gt{background:#F2F7EA;color:#47641E;font-weight:800}
+.x .lane>.bar{background:#F5F7FB;padding:0 5px}
+.x .lane>.bar i{display:block;width:100%;height:9px;border-radius:5px;background:#1428A0}
+.x .lane>.bar.s2 i{background:#1D4AA5}.x .lane>.bar.s3 i{background:#3B6FD4}
+.x .lane>.bar.s4 i{background:#5A96F5}.x .lane>.bar.s5 i{background:#86BC25}
+
+/* --- 4단계 프로세스 레일 (P30) --- */
+.x .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;flex:1;min-height:0}
+.x .step{display:flex;flex-direction:column;min-height:0;background:#fff;border:1px solid #D5DCE8;
+  border-radius:8px;overflow:hidden}
+.x .step>.h{flex:none;display:flex;align-items:center;gap:8px;padding:8px 11px;
+  background:#0E1B6B;color:#fff}
+.x .step>.h i{font-style:normal;font-size:10px;font-weight:800;width:19px;height:19px;border-radius:50%;
+  background:#fff;color:#0E1B6B;display:flex;align-items:center;justify-content:center;flex:none}
+.x .step>.h b{font-size:12.6px;font-weight:800;letter-spacing:-.2px}
+.x .step>.b{flex:1;min-height:0;padding:9px 11px;display:flex;flex-direction:column}
+
+/* --- 좌측 강조 수치 --- */
+.x .big{flex:none;border-bottom:1px solid #E4E8F0;padding-bottom:8px}
+.x .big b{display:block;font-size:26px;line-height:1.1;color:#0E1B6B;font-weight:800;letter-spacing:-1px}
+.x .big span{display:block;font-size:10.8px;color:#68737E;margin-top:3px;font-weight:700}
+.x .big.gn b{color:#41631A}
+
+/* --- 범위 제외 밴드 --- */
+.x .band{flex:none;display:flex;align-items:center;gap:11px;background:#F6F7F9;
+  border:1px solid #E1E4EA;border-radius:7px;padding:8px 12px}
+.x .band i{font-style:normal;flex:none;font-size:9.6px;font-weight:800;color:#6B7280;
+  background:#E7E9EE;border-radius:4px;padding:4px 8px;letter-spacing:.3px}
+.x .band p{margin:0;font-size:11.2px;line-height:1.4;color:#4B5563;font-weight:700}
+
+@media(max-width:1000px){
+  .x .g5,.x .rail{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .x .li>li{font-size:11px}
+  .x table{font-size:10.2px}
+}
+
+/* 균등 분배 리스트 — 항목이 컬럼 높이를 나눠 가짐 */
+.x .li.sp>li{flex:1}
+.x .li.sp>li:before{top:50%;transform:translateY(-50%)}
+.x .li.num.sp>li:before{transform:translateY(-50%)}
+
+/* --- P20 Gate 스트립 --- */
+.x .gstrip{display:flex;gap:8px;align-items:center;background:#F5F7FB;border:1px solid #DDE3EE;
+  border-left:4px solid #1428A0;border-radius:0 6px 6px 0;padding:7px 9px;min-width:0}
+.x .gstrip.s2{border-left-color:#1D4AA5}.x .gstrip.s3{border-left-color:#3B6FD4}
+.x .gstrip.s4{border-left-color:#5A96F5}.x .gstrip.s5{border-left-color:#86BC25;background:#F4F8ED;border-color:#D8E4C4}
+.x .gstrip i{font-style:normal;flex:none;font-size:9.6px;font-weight:800;color:#fff;background:#1428A0;
+  border-radius:4px;padding:4px 7px;line-height:1}
+.x .gstrip.s5 i{background:#5C7A2E}
+.x .gstrip span{font-size:10.2px;line-height:1.32;color:#42505E;font-weight:700;min-width:0}
+.x .c.lite>h4{font-size:11px;padding:6px 10px}
+.x .tags.fill{flex:1;min-height:0;align-content:space-between}
+.x .c.lite .stack{flex:none;font-size:9.6px;line-height:1.35;color:#6D7A8E;
+  border-top:1px dashed #DDE3EE;padding-top:6px;margin-top:6px}
+
+/* --- 누적 기반 계단 (P20) --- */
+.x .stair{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;flex:1;min-height:0}
+.x .stair>.col{display:flex;flex-direction:column;justify-content:flex-end;gap:4px;min-height:0;min-width:0}
+.x .stair .blk{flex:1;min-height:0;max-height:calc(20% - 3.2px);display:flex;align-items:center;gap:7px;
+  border-radius:5px;padding:4px 8px;border:1px solid #C8D5EC;background:#EEF3FC;min-width:0;overflow:hidden}
+.x .stair .blk i{font-style:normal;flex:none;width:15px;height:15px;border-radius:3px;background:#1428A0;
+  color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.x .stair .blk span{font-size:9.6px;line-height:1.25;color:#25406F;font-weight:700;min-width:0;
+  overflow-wrap:break-word;word-break:break-word}
+.x .stair .blk.s2{background:#EDF2FB}.x .stair .blk.s2 i{background:#1D4AA5}
+.x .stair .blk.s3{background:#EDF3FD;border-color:#C4D7F5}.x .stair .blk.s3 i{background:#3B6FD4}
+.x .stair .blk.s4{background:#EFF5FE;border-color:#C7DCF8}.x .stair .blk.s4 i{background:#5A96F5}
+.x .stair .blk.s5{background:#F3F8EA;border-color:#D6E3C0}.x .stair .blk.s5 i{background:#86BC25}
+.x tr.now td{background:#EDF2FC!important;font-weight:800}
+.x tr.now td.k{border-left-color:#0E1B6B}
+
+/* --- P27 Golden Path 아키텍처 --- */
+.x .arch{flex:1;min-height:0;display:grid;grid-template-columns:1.42fr 1fr;gap:10px}
+.x .archL,.x .archR{min-width:0;min-height:0;display:flex;flex-direction:column;gap:7px}
+.x .archh{flex:none;font-size:10.6px;font-weight:800;color:#fff;background:#0E1B6B;
+  border-radius:6px;padding:7px 11px;letter-spacing:-.1px}
+.x .stk{flex:1;min-height:0;display:flex;flex-direction:column;gap:7px}
+.x .lyr{flex:1;min-height:0;display:grid;grid-template-columns:34px 1fr 66px;gap:10px;align-items:center;
+  background:#fff;border:1px solid #D3DBE9;border-left:4px solid #1428A0;border-radius:7px;padding:8px 11px;
+  position:relative}
+.x .lyr:not(:last-child):after{content:"";position:absolute;left:50%;bottom:-7px;width:9px;height:9px;
+  border-right:2px solid #9DB4E0;border-bottom:2px solid #9DB4E0;transform:translateX(-50%) rotate(45deg);z-index:2}
+.x .lyr:nth-child(2){border-left-color:#1D4AA5}.x .lyr:nth-child(3){border-left-color:#3B6FD4}
+.x .lyr:nth-child(4){border-left-color:#5A96F5}.x .lyr:nth-child(5){border-left-color:#86BC25}
+.x .lyr>i{font-style:normal;font-size:10px;font-weight:800;color:#1428A0;background:#EAF0FB;
+  border-radius:5px;padding:5px 0;text-align:center}
+.x .lyr strong{display:block;font-size:12.6px;color:#0E1B6B;font-weight:800;line-height:1.28}
+.x .lyr small{display:block;font-size:10.4px;color:#5F6A74;line-height:1.35;margin-top:2px}
+.x .lyr>em{font-style:normal;text-align:center;font-size:9.4px;font-weight:800;color:#4A5768;
+  background:#F1F3F7;border:1px solid #DFE3EA;border-radius:10px;padding:4px 5px}
+.x .pls{flex:1;min-height:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.x .pl{min-width:0;min-height:0;display:flex;flex-direction:column;background:#fff;
+  border:1px solid #D3DBE9;border-radius:7px;overflow:hidden}
+.x .pl h5{margin:0;flex:none;background:#EDF1FA;color:#0E1B6B;font-size:10.4px;font-weight:800;
+  padding:7px 8px;text-align:center;border-bottom:1px solid #DCE3F0;line-height:1.25}
+.x .pl .pb{flex:1;min-height:0;display:flex;flex-direction:column;gap:5px;padding:8px;justify-content:center}
+.x .pl .pb span{font-size:10px;font-weight:700;color:#1B49A6;background:#F5F8FD;border:1px solid #C9D6EC;
+  border-radius:5px;padding:5px 6px;text-align:center;line-height:1.25;overflow-wrap:break-word}
+.x .pl u{flex:none;text-decoration:none;font-size:9.2px;font-weight:800;color:#6C7789;background:#F7F8FA;
+  border-top:1px solid #E6E9EF;padding:5px 6px;text-align:center}
+.x .pl .pb{justify-content:stretch}
+.x .pl .pb span{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+
+/* --- 세로 채움 칩 레일 (P31 하단) --- */
+.x .rail2{flex:1;min-height:0;display:flex;flex-direction:column;gap:5px}
+.x .rail2 span{flex:1;min-height:0;display:flex;align-items:center;padding:5px 10px;
+  font-size:10.8px;font-weight:700;color:#1B49A6;background:#F5F8FD;border:1px solid #C9D6EC;
+  border-radius:6px;line-height:1.25;overflow-wrap:break-word}
+/* P31 레인 높이 고정 */
+.x .lanes{flex:none;gap:5px}
+.x .lane{flex:none;height:40px}
+.x .lane>.bar i{height:12px}
+
+/* --- 구분 세그먼트 블록 --- */
+.x .segs{flex:1;min-height:0;display:flex;flex-direction:column;gap:7px}
+.x .seg{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:5px;
+  border-radius:7px;padding:9px 12px;border:1px solid #C8D5EC;background:#F5F8FD}
+.x .seg i{font-style:normal;align-self:flex-start;font-size:9.6px;font-weight:800;letter-spacing:.3px;
+  color:#1B49A6;background:#E4EDFB;border-radius:9px;padding:3px 9px}
+.x .seg p{margin:0;font-size:11.6px;line-height:1.42;color:#2B3946;font-weight:700}
+.x .seg.r{background:#F6F7F3;border-color:#DCE0D6}
+.x .seg.r i{color:#5A665A;background:#E9EBE3}
+.x .seg.o{background:#F2F7EA;border-color:#D3E1BC}
+.x .seg.o i{color:#4C6B22;background:#E3EED0}
+.x .rail2.off span{color:#5A665A;background:#F6F7F3;border-color:#DCE0D6}
+
+/* --- 좁은 화면에서 단계 카드 본문 축소 --- */
+@media(max-width:1560px){
+  .x .stg h3{font-size:12.2px}
+  .x .stg .cap{font-size:9.9px}
+  .x .stg .li>li{font-size:10.3px;line-height:1.32}
+  .x .stg .li{gap:4px}
+  .x .stg .sub{font-size:8.8px}
+  .x .stair .blk span{font-size:8.8px}
+  .x .gstrip span{font-size:9.4px}
+}
+@media(max-width:1340px){
+  .x .stg .li>li{font-size:9.3px;line-height:1.28}
+  .x .stg .li{gap:3px}
+  .x .stg h3{font-size:11px}
+  .x .stg .cap{font-size:9.2px}
+  .x .stg>.b{padding:7px 8px;gap:4px}
+  .x .kpi b{font-size:15px}
+  .x .li>li{font-size:11px}
+  .x table{font-size:10.6px}
+}
