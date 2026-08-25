@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "deloitte-green",
+  "description": "James Report 딜로이트 그린 팔레트를 dashi-ppt 테마 팩 위에 얹는 프리셋 정의",
+  "palette": {
+    "PRIMARY_GREEN": "#006940",
+    "DARK_GREEN": "#004D2E",
+    "DEEP_GREEN": "#0B3B27",
+    "ACCENT_GREEN": "#00A651",
+    "LIME_ACCENT": "#86BC25",
+    "LIGHT_GREEN": "#E8F5EE",
+    "MID_GREEN": "#D0EAD8",
+    "TEXT_DARK": "#1A1A1A",
+    "TEXT_GRAY": "#595959",
+    "TEXT_LIGHT": "#888888",
+    "BG_WHITE": "#FFFFFF",
+    "BG_LIGHT": "#F5F5F5",
+    "BORDER_GRAY": "#CCCCCC",
+    "HEADER_BG": "#1A1A1A"
+  },
+  "rules": {
+    "limeAccent": "LIME_ACCENT(#86BC25)는 덱 전체에서 가장 중요한 단 하나의 요소에만 사용함. 장식 사용 금지",
+    "gradient": "그라디언트 금지, 플랫 단색만 사용함",
+    "font": "PPT 맑은 고딕, HTML Pretendard 우선 / Noto Sans KR 대체"
+  },
+  "presets": {
+    "deloitte-white": {
+      "default": true,
+      "basePack": "theme07",
+      "baseLabel": "冷白调研风",
+      "accent": "#006940",
+      "usage": "임원 보고, 제안서, ISP, 백서 — 흰 바탕 단일 액센트 구성"
+    },
+    "deloitte-chart": {
+      "basePack": "theme05",
+      "baseLabel": "色谱图表风",
+      "accent": "#006940",
+      "usage": "데이터·성과 분석, KPI 덱 — 차트 밀도가 높은 구성"
+    },
+    "deloitte-dark": {
+      "basePack": "theme06",
+      "baseLabel": "深色图谱风",
+      "accent": "#00A651",
+      "accentNote": "어두운 배경에서 PRIMARY_GREEN 대비가 부족하여 ACCENT_GREEN을 사용함",
+      "usage": "전략 발표, 아키텍처·토폴로지"
+    },
+    "deloitte-light": {
+      "basePack": "theme01",
+      "baseLabel": "轻拟态风",
+      "accent": "#006940",
+      "usage": "강의 자료, 밝은 톤 요청 — LIGHT_GREEN 배경 비중을 높인 변형"
+    }
+  }
+}

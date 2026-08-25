@@ -14,7 +14,8 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/dashi-ppt"
+        "./skills/dashi-ppt",
+        "./skills/james-report-ppt"
       ]
     }
   ]
