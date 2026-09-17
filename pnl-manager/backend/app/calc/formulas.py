@@ -376,7 +376,11 @@ def compute_pnl(data: PnlInput) -> EngagementPnl:
         billing_from_records = wbs_amounts.get(ItemType.BILLING.value, 0)
         billed_from_plans = sum(p.billed_amount for p in billing_plans)
         billing_amount = max(billing_from_records, billed_from_plans)
-        planned_billing = sum(p.planned_amount for p in billing_plans) or billing_amount
+        # Billing 계획이 등록돼 있으면 계획액을 그대로 쓴다(0으로 입력된 경우 포함).
+        # 계획이 아예 없을 때만 실적 청구액으로 대체한다.
+        planned_billing = (
+            sum(p.planned_amount for p in billing_plans) if billing_plans else billing_amount
+        )
         unbilled = (
             sum(p.unbilled for p in billing_plans)
             if billing_plans
@@ -461,9 +465,9 @@ def compute_pnl(data: PnlInput) -> EngagementPnl:
     total_contract = sum(c.amount for c in data.contracts)
     cumulative_usage = sum(r.cumulative_usage for r in wbs_results)
     total_billing = sum(r.billing for r in wbs_results)
-    total_planned_billing = sum(
-        p.planned_amount for p in data.billing
-    ) or total_billing
+    total_planned_billing = (
+        sum(p.planned_amount for p in data.billing) if data.billing else total_billing
+    )
     remaining_estimate = sum(r.remaining_input_estimate for r in wbs_results)
     backlog_entered = any(r.backlog_entered for r in wbs_results)
     eac = cumulative_usage + remaining_estimate

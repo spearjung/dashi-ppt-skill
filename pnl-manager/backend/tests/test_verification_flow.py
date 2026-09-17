@@ -275,3 +275,24 @@ def test_contract_period_overlap_rejected(client, prepared):
 def test_duplicate_engagement_code_rejected(client, prepared):
     response = client.post("/api/engagements", json=ENGAGEMENT_PAYLOAD)
     assert response.status_code == 409
+
+
+def test_billing_plan_with_zero_planned_amount_is_respected(client, prepared, session):
+    """Billing 계획이 0원으로 등록되면 실적 청구액으로 대체하지 않는다."""
+    from app.models import BillingPlan
+
+    eid = prepared["engagement"]["id"]
+    upload_id = prepared["upload"]["id"]
+    rows = records(client, upload_id)
+    client.post(
+        f"/api/uploads/{upload_id}/decisions",
+        json={"decisions": [{"ocr_record_id": r["id"], "action": "confirm"} for r in rows]},
+    )
+    client.post(f"/api/uploads/{upload_id}/confirm", json={})
+
+    session.add(BillingPlan(wbs_id=prepared["wbs_by_code"][WBS_1], planned_amount=0, billed_amount=0))
+    session.flush()
+
+    pnl = client.get(f"/api/engagements/{eid}/pnl").json()
+    # 계획 청구액 0원이 그대로 반영되어 종료예상 WIP는 종료예상 사용액과 같다
+    assert pnl["expected_end_wip"] == pnl["eac"]

@@ -31,8 +31,6 @@ from ..enums import (
     DuplicateVerdict,
     IssueSeverity,
     IssueStatus,
-    IssueType,
-    ItemType,
     RecordAction,
     ScenarioKind,
     ScreenType,

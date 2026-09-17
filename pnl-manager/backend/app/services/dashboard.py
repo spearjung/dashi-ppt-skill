@@ -6,7 +6,6 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..enums import (
-    CALCULABLE_ACTIONS,
     Confidence,
     DuplicateVerdict,
     IssueStatus,

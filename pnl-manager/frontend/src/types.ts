@@ -150,7 +150,7 @@ export interface ConfirmedRecord {
 export interface Gate {
   can_confirm: boolean
   blockers: string[]
-  unconfirmed_high_impact: number[]
+  unconfirmed_fields: number[]
   unresolved_low: number[]
 }
 

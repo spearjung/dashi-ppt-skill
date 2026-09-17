@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from ..calc.formulas import FORMULA_VERSION
 from ..enums import CALCULABLE_ACTIONS, ItemType
-from ..models import ConfirmedRecord, Engagement, Snapshot, SnapshotValue, Upload, Wbs
+from ..models import ConfirmedRecord, Engagement, Snapshot, SnapshotValue, Upload
 from . import audit
 
 #: 연속 Snapshot 간 비교 항목(§FR-08)

@@ -20,7 +20,6 @@ from sqlalchemy.orm import Session
 from ..enums import (
     CALCULABLE_ACTIONS,
     Confidence,
-    DuplicateVerdict,
     ItemType,
     NON_CURRENCY_ITEM_TYPES,
     RecordAction,
@@ -31,12 +30,10 @@ from ..enums import (
 from ..models import (
     BillingPlan,
     ConfirmedRecord,
-    Engagement,
     LtdAdjustment,
     OcrRecord,
     StaffingPlan,
     Upload,
-    Wbs,
 )
 from ..ocr.confidence import blocks_confirmation, is_high_impact
 from ..ocr.units import normalize_amount
@@ -184,14 +181,14 @@ def _parse_date(value: str | None):
 class GateResult:
     can_confirm: bool
     blockers: list[str]
-    unconfirmed_high_impact: list[int]
+    unconfirmed_fields: list[int]
     unresolved_low: list[int]
 
     def as_dict(self) -> dict:
         return {
             "can_confirm": self.can_confirm,
             "blockers": self.blockers,
-            "unconfirmed_high_impact": self.unconfirmed_high_impact,
+            "unconfirmed_fields": self.unconfirmed_fields,
             "unresolved_low": self.unresolved_low,
         }
 
@@ -233,7 +230,7 @@ def confirmation_gate(upload: Upload) -> GateResult:
     return GateResult(
         can_confirm=not blockers,
         blockers=blockers,
-        unconfirmed_high_impact=sorted(set(unconfirmed)),
+        unconfirmed_fields=sorted(set(unconfirmed)),
         unresolved_low=sorted(set(unresolved)),
     )
 

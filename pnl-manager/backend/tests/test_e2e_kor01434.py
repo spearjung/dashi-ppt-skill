@@ -118,7 +118,7 @@ def test_high_impact_fields_block_confirmation(client, scenario):
     assert time_fields and all(r["high_impact"] for r in time_fields)
     assert all(r["needs_individual_confirmation"] for r in time_fields)
     assert view["gate"]["can_confirm"] is False
-    assert view["gate"]["unconfirmed_high_impact"]
+    assert view["gate"]["unconfirmed_fields"]
 
     blocked = client.post(f"/api/uploads/{upload_id}/confirm", json={"actor": "EP"})
     assert blocked.status_code == 409

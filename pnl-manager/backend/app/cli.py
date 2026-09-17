@@ -17,15 +17,14 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-from datetime import date
 from pathlib import Path
 
 from sqlalchemy import select
 
 from . import config
 from .db import SessionLocal, init_db
-from .enums import CALCULABLE_ACTIONS, RecordAction, UploadStatus
-from .models import ConfirmedRecord, Engagement, Upload
+from .enums import RecordAction, UploadStatus
+from .models import Engagement, Upload
 from .ocr.pipeline import ingest_payload, run_ocr
 from .ocr.schema import OcrPayload
 from .ocr.units import format_krw

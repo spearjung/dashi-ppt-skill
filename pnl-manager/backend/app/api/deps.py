@@ -6,11 +6,7 @@ from fastapi import Depends, HTTPException, Path
 from sqlalchemy.orm import Session
 
 from ..db import get_session
-from ..models import Engagement, Issue, Snapshot, Upload, Wbs
-
-
-def db() -> Session:  # pragma: no cover - FastAPI 의존성 래퍼
-    raise NotImplementedError
+from ..models import Engagement, Issue, Snapshot, Upload
 
 
 def get_engagement(

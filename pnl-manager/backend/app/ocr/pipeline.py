@@ -20,9 +20,7 @@ from sqlalchemy.orm import Session
 from ..enums import (
     NON_CURRENCY_ITEM_TYPES,
     CALCULABLE_ACTIONS,
-    Confidence,
     DuplicateVerdict,
-    ItemType,
     ScreenType,
     UploadStatus,
     ValueBasis,
