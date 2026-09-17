@@ -21,14 +21,27 @@ from ..enums import (
 )
 from ..models import ConfirmedRecord, Contract, Engagement, Issue, OcrRecord, Upload, Wbs
 from ..rules.anomalies import (
+    ACTION_LABELS,
     EngagementView,
     RecordView,
-    WBS_ATTRIBUTION_ACTION_LABELS,
     WbsView,
     detect_anomalies,
 )
 from . import audit
 from .pnl import compute
+
+#: 값을 바꾸지 않고 선택만 기록하는 조치(§FR-12 조치사항)
+DECISION_ONLY_ACTIONS = frozenset(
+    {
+        "request_change_order",
+        "book_ltd",
+        "reduce_mm",
+        "issue_invoice",
+        "check_billing_plan",
+        "upload_backlog",
+        "enter_manually",
+    }
+)
 
 
 def _wbs_views(session: Session, engagement_id: int) -> list[WbsView]:
@@ -134,8 +147,7 @@ def scan_upload(session: Session, upload: Upload, *, actor: str | None = None) -
             related_record_ids=list(anomaly.related_record_ids),
             related_wbs_id=anomaly.related_wbs_id,
             suggested_actions=[
-                {"key": a, "label": WBS_ATTRIBUTION_ACTION_LABELS.get(a, a)}
-                for a in anomaly.suggested_actions
+                {"key": a, "label": ACTION_LABELS.get(a, a)} for a in anomaly.suggested_actions
             ],
             dedup_key=anomaly.dedup_key,
         )
@@ -292,6 +304,10 @@ def resolve_issue(
     elif selected_action in ("set_unit", "recheck_source", "edit"):
         # 값 수정은 검증 화면의 액션으로 처리한다. 여기서는 상태만 정리한다.
         pass
+    elif selected_action in DECISION_ONLY_ACTIONS:
+        # 조치사항(§FR-12)의 선택은 EP의 의사결정 기록이다. 값은 바꾸지 않고
+        # 선택 내용과 시점만 감사 로그에 남긴다.
+        pass
     else:
         raise ValueError(f"지원하지 않는 조치입니다: {selected_action}")
 
@@ -334,10 +350,17 @@ def refresh_action_items(session: Session, engagement: Engagement) -> list[Issue
             select(Issue).where(Issue.engagement_id == engagement.id, Issue.dedup_key == dedup)
         ).scalars().first()
         if existing is not None:
+            # 수치는 항상 최신으로 갱신한다.
             existing.title = title
             existing.detail = detail
             existing.severity = severity.value
-            if existing.status == IssueStatus.RESOLVED.value:
+            # 이미 조치를 선택한 건은 다시 열지 않는다. 조치(예: 추가계약 추진)가
+            # 반영되기까지 조건은 계속 성립하므로, 재오픈하면 EP의 의사결정 기록이
+            # 사라진다. 조건 자체는 대시보드의 '조치 필요 프로젝트'가 별도로 노출한다.
+            if (
+                existing.status == IssueStatus.RESOLVED.value
+                and existing.selected_action is None
+            ):
                 existing.status = IssueStatus.OPEN.value
                 existing.resolved_at = None
             return
@@ -347,7 +370,7 @@ def refresh_action_items(session: Session, engagement: Engagement) -> list[Issue
             severity=severity.value,
             title=title,
             detail=detail,
-            suggested_actions=[{"key": a, "label": a} for a in actions],
+            suggested_actions=[{"key": a, "label": ACTION_LABELS.get(a, a)} for a in actions],
             dedup_key=dedup,
         )
         session.add(issue)
@@ -357,10 +380,11 @@ def refresh_action_items(session: Session, engagement: Engagement) -> list[Issue
         upsert(
             issue_type=IssueType.WIP_ACTION,
             severity=IssueSeverity.HIGH,
-            title=f"LTD 필요액 {pnl.ltd_outstanding:,}원 — 상각 또는 추가계약 결정 필요",
+            title=f"LTD 잔여 상각 필요액 {pnl.ltd_outstanding:,}원 — 상각 또는 추가계약 결정 필요",
             detail=(
                 f"종료예상 사용액 {pnl.eac:,}원이 총 계약금액 {pnl.total_contract_amount:,}원을 "
-                f"초과합니다. 추가계약으로 회수하거나 LTD 상각을 결정하십시오."
+                f"초과합니다(LTD 필요액 {pnl.ltd_required:,}원, 기 조정 {pnl.ltd_adjusted:,}원). "
+                "추가계약으로 회수하거나 LTD 상각을 결정하십시오."
             ),
             actions=("request_change_order", "book_ltd", "reduce_mm"),
             dedup="action:ltd_required",

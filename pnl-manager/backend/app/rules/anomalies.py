@@ -30,6 +30,25 @@ WBS_ATTRIBUTION_ACTION_LABELS: dict[str, str] = {
     "exclude_temporarily": "계산 대상에서 임시 제외",
 }
 
+#: 제안 조치 전체의 표시 라벨. 이상징후·조치사항 화면에서 공통으로 사용한다.
+ACTION_LABELS: dict[str, str] = {
+    **WBS_ATTRIBUTION_ACTION_LABELS,
+    "confirm": "확인",
+    "exclude": "제외",
+    "keep": "유지",
+    "replace": "최신 값으로 대체",
+    "set_unit": "단위 수정",
+    "recheck_source": "원본 재확인",
+    "edit": "값 수정",
+    "request_change_order": "추가계약 추진",
+    "book_ltd": "LTD 상각 결정",
+    "reduce_mm": "잔여 MM 절감",
+    "issue_invoice": "청구 진행",
+    "check_billing_plan": "Billing 일정 확인",
+    "upload_backlog": "Backlog 화면 업로드",
+    "enter_manually": "잔여 MM 직접 입력",
+}
+
 #: 단위 오류 판정 기준. 동일 WBS·항목의 기존 금액 대비 자릿수 차이.
 UNIT_MAGNITUDE_THRESHOLD = 3
 
