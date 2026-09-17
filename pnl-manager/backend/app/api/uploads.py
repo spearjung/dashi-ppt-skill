@@ -18,7 +18,7 @@ from ..ocr.schema import OcrPayload
 from ..schemas import OcrPayloadIn, ScreenTypeUpdate, UploadOut, UploadResult
 from ..services import issues as issues_service
 from ..services import uploads as upload_service
-from .deps import get_engagement, get_upload
+from .deps import current_actor, get_engagement, get_upload
 
 router = APIRouter(tags=["uploads"])
 
@@ -30,6 +30,7 @@ async def upload_captures(
     uploaded_by: str | None = Form(default=None),
     engagement: Engagement = Depends(get_engagement),
     session: Session = Depends(get_session),
+    actor: str | None = Depends(current_actor),
 ):
     """여러 장을 동시에 업로드한다. 동일 해시는 기존 Upload로 연결하고 경고한다."""
     results: list[UploadResult] = []
@@ -42,7 +43,7 @@ async def upload_captures(
                 filename=file.filename or "capture.png",
                 content=content,
                 screen_type=screen_type,
-                uploaded_by=uploaded_by,
+                uploaded_by=actor or uploaded_by,
             )
         except upload_service.UploadError as exc:
             raise HTTPException(400, str(exc)) from exc

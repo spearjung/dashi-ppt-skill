@@ -47,6 +47,7 @@ ACTION_LABELS: dict[str, str] = {
     "check_billing_plan": "Billing 일정 확인",
     "upload_backlog": "Backlog 화면 업로드",
     "enter_manually": "잔여 MM 직접 입력",
+    "condition_cleared": "조건 해소(자동)",
 }
 
 #: 단위 오류 판정 기준. 동일 WBS·항목의 기존 금액 대비 자릿수 차이.

@@ -220,8 +220,8 @@ def test_same_period_records_are_summed_after_reassignment():
     assert amounts[(10, "time")] == 80_030_000
 
 
-def test_contract_amount_allocated_pro_rata_across_multiple_wbs():
-    """한 차수에 WBS가 여러 개이면 계약금액을 사용액 비율로 배분한다."""
+def test_contract_amount_split_equally_across_multiple_wbs_with_warning():
+    """한 차수에 WBS가 여러 개인 경우는 예외적이므로 균등 분할하고 경고한다."""
     data = base_input(
         wbs_list=[
             WbsInput(id=10, code="W-01", contract_id=1, contract_seq=0),
@@ -234,9 +234,18 @@ def test_contract_amount_allocated_pro_rata_across_multiple_wbs():
     )
     pnl = compute_pnl(data)
     allocated = {w.code: w.allocated_contract_amount for w in pnl.wbs_results}
-    assert allocated["W-01"] == 75_000_000
-    assert allocated["W-02"] == 25_000_000
+    assert allocated["W-01"] == 50_000_000
+    assert allocated["W-02"] == 50_000_000
+    # 분할 후에도 차수 계약금액 총액은 보존된다
     assert sum(allocated.values()) == CONTRACT_AMOUNT
+    assert any("균등 분할" in w for w in pnl.warnings)
+
+
+def test_single_wbs_per_contract_gets_full_amount():
+    """정상 구성(차수당 WBS 1개)에서는 계약금액이 전액 배분되고 경고가 없다."""
+    pnl = compute_pnl(base_input())
+    assert pnl.wbs_results[0].allocated_contract_amount == CONTRACT_AMOUNT
+    assert not any("균등 분할" in w for w in pnl.warnings)
 
 
 def test_ltd_not_netted_across_contract_seq():
@@ -324,3 +333,44 @@ def test_scenario_does_not_mutate_input():
                                                    additional_contract_amount=1_000))
     assert data.staffing[0].remaining_mm == 2.0
     assert data.contracts[0].amount == CONTRACT_AMOUNT
+
+
+def test_billing_screen_items_drive_billing_figures():
+    """Billing 화면의 청구 예정액·완료액·미청구액을 그대로 사용한다."""
+    data = base_input(
+        records=base_input().records
+        + [
+            CostRecord(10, "billing", 40_000_000, period_from=date(2025, 1, 1)),
+            CostRecord(10, "billing_planned", 90_000_000, period_from=date(2025, 1, 1)),
+            CostRecord(10, "billing_unbilled", 25_000_000, period_from=date(2025, 1, 1)),
+            CostRecord(10, "billable_expense", 3_000_000, period_from=date(2025, 1, 1)),
+        ]
+    )
+    pnl = compute_pnl(data)
+    assert pnl.total_billing == 40_000_000
+    assert pnl.total_planned_billing == 90_000_000
+    # 미청구액은 화면 표시값을 우선한다(산식 계산값 68,000,000 − 40,000,000 = 28,000,000 아님)
+    assert pnl.unbilled_amount == 25_000_000
+    assert pnl.total_billable_expense == 3_000_000
+    # 종료예상 WIP = 종료예상 사용액 − 총 Billing 예정액
+    assert pnl.expected_end_wip == pnl.eac - 90_000_000
+    # 현재 WIP = Time + Expense − Billing
+    assert pnl.current_wip == 60_000_000 + 5_000_000 - 40_000_000
+
+
+def test_billing_plan_takes_precedence_over_screen_billing_item():
+    """Billing 계획이 있으면 다른 화면의 billing 항목과 중복 합산하지 않는다."""
+    data = base_input(
+        records=base_input().records
+        + [CostRecord(10, "billing", 40_000_000, period_from=date(2025, 1, 1))],
+        billing=[
+            BillingInput(
+                wbs_id=10, planned_amount=90_000_000, billed_amount=55_000_000,
+                unbilled_amount=35_000_000, billable_expense=1_000_000,
+            )
+        ],
+    )
+    pnl = compute_pnl(data)
+    assert pnl.total_billing == 55_000_000
+    assert pnl.unbilled_amount == 35_000_000
+    assert pnl.total_planned_billing == 90_000_000

@@ -225,3 +225,50 @@ td .mono, td.mono { white-space: nowrap; }
 
 .spinner { color: var(--ink-mute); font-size: 13px; padding: 12px 0; }
 .empty { color: var(--ink-mute); font-size: 13px; padding: 16px; text-align: center; }
+
+/* 로그인 화면 */
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 24px;
+}
+.login-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.login-card h1 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--green);
+}
+.login-card p { margin: 0; }
+.login-card .field input { padding: 7px 9px; }
+.login-card button { margin-top: 6px; padding: 8px; }
+
+.topbar .session {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
+  color: rgba(255, 255, 255, 0.9);
+}
+button.ghost {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+button.ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}

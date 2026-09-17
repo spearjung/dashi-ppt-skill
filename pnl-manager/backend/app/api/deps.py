@@ -2,11 +2,23 @@
 
 from __future__ import annotations
 
-from fastapi import Depends, HTTPException, Path
+from fastapi import Depends, HTTPException, Path, Request
 from sqlalchemy.orm import Session
 
+from .. import auth, config
 from ..db import get_session
 from ..models import Engagement, Issue, Snapshot, Upload
+
+
+def current_actor(request: Request) -> str | None:
+    """로그인 세션의 행위자 이름.
+
+    인증이 켜져 있으면 세션 이름이 기록의 행위자가 되며, 요청 본문으로 온 값보다
+    우선한다(본문 값은 위조할 수 있다). 인증이 꺼진 로컬 실행에서는 None이다.
+    """
+    if not config.AUTH_ENABLED:
+        return None
+    return auth.read_session(request.cookies.get(config.SESSION_COOKIE))
 
 
 def get_engagement(

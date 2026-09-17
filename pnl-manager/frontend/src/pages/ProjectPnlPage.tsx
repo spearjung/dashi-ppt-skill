@@ -224,14 +224,16 @@ export function ProjectPnlPage({ engagementId }: { engagementId: number | null }
         </div>
       </Panel>
 
-      <Panel title="Billing 현황">
+      <Panel title="Billing 현황" hint="Billing 화면 캡처의 확정값">
         <table>
           <thead>
             <tr>
               <th>WBS</th>
               <th className="n">누적 사용액</th>
-              <th className="n">Billing</th>
+              <th className="n">청구 예정액</th>
+              <th className="n">청구 완료액</th>
               <th className="n">미청구액</th>
+              <th className="n">청구가능 경비</th>
               <th className="n">종료예상 WIP</th>
             </tr>
           </thead>
@@ -240,16 +242,20 @@ export function ProjectPnlPage({ engagementId }: { engagementId: number | null }
               <tr key={row.wbs_id}>
                 <td className="mono">{row.code}</td>
                 <td className="n">{krw(row.cumulative_usage)}</td>
+                <td className="n">{krw(row.planned_billing)}</td>
                 <td className="n">{krw(row.billing)}</td>
                 <td className="n">{krw(row.unbilled_amount)}</td>
+                <td className="n">{krw(row.billable_expense)}</td>
                 <td className="n">{krw(row.expected_end_wip)}</td>
               </tr>
             ))}
             <tr>
               <th>합계</th>
               <th className="n">{krw(data.cumulative_usage)}</th>
+              <th className="n">{krw(data.total_planned_billing)}</th>
               <th className="n">{krw(data.total_billing)}</th>
               <th className="n">{krw(data.unbilled_amount)}</th>
+              <th className="n">{krw(data.total_billable_expense)}</th>
               <th className="n">{krw(data.expected_end_wip)}</th>
             </tr>
           </tbody>

@@ -18,6 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..enums import (
+    BILLING_ITEM_TYPES,
     CALCULABLE_ACTIONS,
     Confidence,
     ItemType,
@@ -304,14 +305,35 @@ def _materialize_plans(session: Session, upload: Upload) -> None:
                 )
             )
 
-        billing = next((c for c in row_records if c.item_type == ItemType.BILLING.value), None)
-        if billing is not None and upload.screen_type == ScreenType.BILLING.value:
+        # Billing 화면 캡처: 청구 예정액·완료액·미청구액·청구가능 경비를 그대로 보존한다.
+        billing_items = {
+            c.item_type: c
+            for c in row_records
+            if c.item_type in {i.value for i in BILLING_ITEM_TYPES}
+        }
+        billed = billing_items.get(ItemType.BILLING.value)
+        planned = billing_items.get(ItemType.BILLING_PLANNED.value)
+        unbilled = billing_items.get(ItemType.BILLING_UNBILLED.value)
+        billable_expense = billing_items.get(ItemType.BILLABLE_EXPENSE.value)
+
+        # 청구 항목이 하나라도 있으면 계획을 만든다. WIP 화면의 billing 단독 값은
+        # 계획이 아니라 실적 참고값이므로 Billing 화면일 때만 반영한다.
+        explicit_billing_screen = upload.screen_type == ScreenType.BILLING.value
+        has_billing_detail = any(
+            item is not None for item in (planned, unbilled, billable_expense)
+        )
+        if has_billing_detail or (explicit_billing_screen and billed is not None):
+            billed_amount = int(billed.amount or 0) if billed else 0
             session.add(
                 BillingPlan(
                     wbs_id=wbs_id,
-                    planned_amount=int(billing.amount or 0),
-                    billed_amount=int(billing.amount or 0),
-                    billing_date=billing.as_of_date,
+                    # 청구 예정액이 없으면 완료액을 계획으로 본다.
+                    planned_amount=int(planned.amount or 0) if planned else billed_amount,
+                    billed_amount=billed_amount,
+                    billing_date=(planned or billed or unbilled).as_of_date,
+                    # 미청구액은 화면 표시값을 우선 보존하고, 없으면 계획−완료로 계산한다.
+                    unbilled_amount=int(unbilled.amount or 0) if unbilled else None,
+                    billable_expense=int(billable_expense.amount or 0) if billable_expense else 0,
                     source_upload_id=upload.id,
                 )
             )

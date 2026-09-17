@@ -21,6 +21,9 @@ HIGH_IMPACT_ITEM_TYPES: frozenset[str] = frozenset(
         ItemType.EXPENSE.value,
         ItemType.BILLING.value,
         ItemType.LTD.value,
+        # Billing 화면의 청구 예정액·미청구액도 손익 판단에 직접 쓰이므로 고영향으로 다룬다.
+        ItemType.BILLING_PLANNED.value,
+        ItemType.BILLING_UNBILLED.value,
     }
 )
 

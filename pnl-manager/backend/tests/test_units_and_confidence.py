@@ -69,11 +69,24 @@ def test_format_krw():
 
 
 def test_high_impact_fields_match_prd():
-    """§FR-04 고영향 필드 목록."""
+    """§FR-04 고영향 필드 목록.
+
+    PRD가 명시한 5종에 Billing 화면의 청구 예정액·미청구액을 더한다.
+    둘 다 손익 판단에 직접 쓰이므로 High여도 개별 확인이 필요하다.
+    """
     assert HIGH_IMPACT_ITEM_TYPES == frozenset(
-        {"contract_amount", "time", "expense", "billing", "ltd"}
+        {
+            "contract_amount",
+            "time",
+            "expense",
+            "billing",
+            "ltd",
+            "billing_planned",
+            "billing_unbilled",
+        }
     )
     assert is_high_impact("time")
+    assert is_high_impact("billing_planned")
     assert not is_high_impact("provision")
 
 

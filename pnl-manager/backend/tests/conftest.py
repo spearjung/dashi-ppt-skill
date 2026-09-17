@@ -12,6 +12,8 @@ _TMP = Path(tempfile.mkdtemp(prefix="pnl-test-"))
 os.environ.setdefault("PNL_DATA_DIR", str(_TMP))
 os.environ["PNL_DATABASE_URL"] = f"sqlite:///{_TMP / 'test.sqlite'}"
 os.environ["PNL_OCR_PROVIDER"] = "fixture"
+os.environ["PNL_AUTH_ENABLED"] = "0"
+os.environ.pop("PNL_APP_PASSWORD", None)
 
 from app import config  # noqa: E402
 from app.db import SessionLocal, engine  # noqa: E402

@@ -42,6 +42,9 @@ export const ITEM_LABELS: Record<string, string> = {
   provision: 'Provision',
   backlog_mm: '잔여 MM',
   rate: '적용 Rate',
+  billing_planned: '청구 예정액',
+  billing_unbilled: '미청구액',
+  billable_expense: '청구가능 경비',
 }
 
 export const SCREEN_LABELS: Record<string, string> = {

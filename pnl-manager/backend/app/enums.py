@@ -44,6 +44,7 @@ class ItemType(StrEnum):
     TIME = "time"
     EXPENSE = "expense"
     OS = "os"
+    #: 청구 완료액(실적)
     BILLING = "billing"
     NET_REVENUE = "net_revenue"
     WIP = "wip"
@@ -51,10 +52,26 @@ class ItemType(StrEnum):
     PROVISION = "provision"
     BACKLOG_MM = "backlog_mm"
     RATE = "rate"
+    # ── Billing 화면 캡처 대응(§6.2 BILLING_PLAN 속성에 1:1 매핑).
+    #    PRD의 item_type 열거값에 더해 청구 항목을 구분해 저장한다.
+    #: 청구 예정액
+    BILLING_PLANNED = "billing_planned"
+    #: 미청구액(화면 표시값)
+    BILLING_UNBILLED = "billing_unbilled"
+    #: 청구 가능 경비
+    BILLABLE_EXPENSE = "billable_expense"
 
 
 #: 손익 사용액(누적 실적)에 합산되는 항목(§3.2 Time + Expense + OS)
 COST_ITEM_TYPES = (ItemType.TIME, ItemType.EXPENSE, ItemType.OS)
+
+#: Billing 화면에서 추출되는 청구 항목. 한 행에 이 중 하나라도 있으면 BillingPlan을 만든다.
+BILLING_ITEM_TYPES = (
+    ItemType.BILLING,
+    ItemType.BILLING_PLANNED,
+    ItemType.BILLING_UNBILLED,
+    ItemType.BILLABLE_EXPENSE,
+)
 
 #: 금액이 아니라 수량·단가인 항목. 원(KRW) 정수 정규화 대상에서 제외한다.
 NON_CURRENCY_ITEM_TYPES = (ItemType.BACKLOG_MM,)

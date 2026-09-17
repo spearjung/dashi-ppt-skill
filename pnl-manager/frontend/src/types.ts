@@ -25,6 +25,10 @@ export type ItemType =
   | 'provision'
   | 'backlog_mm'
   | 'rate'
+  // Billing 화면 캡처 대응
+  | 'billing_planned'
+  | 'billing_unbilled'
+  | 'billable_expense'
 
 export type Confidence = 'high' | 'medium' | 'low' | 'failed'
 export type ValueBasis = 'cumulative' | 'monthly' | 'period'
@@ -210,6 +214,8 @@ export interface WbsResult {
   ltd_adjusted: number
   ltd_outstanding: number
   unbilled_amount: number
+  planned_billing: number
+  billable_expense: number
   warnings: string[]
 }
 
@@ -252,6 +258,8 @@ export interface Pnl {
   weighted_average_rate: number | null
   expected_margin_rate: number | null
   unbilled_amount: number
+  total_planned_billing: number
+  total_billable_expense: number
   contracts: ContractResult[]
   wbs_results: WbsResult[]
   warnings: string[]

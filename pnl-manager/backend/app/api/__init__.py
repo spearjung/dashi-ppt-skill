@@ -2,9 +2,10 @@
 
 from fastapi import APIRouter
 
-from . import analytics, engagements, uploads, verify
+from . import analytics, auth, engagements, uploads, verify
 
 router = APIRouter(prefix="/api")
+router.include_router(auth.router)
 router.include_router(engagements.router)
 router.include_router(uploads.router)
 router.include_router(verify.router)

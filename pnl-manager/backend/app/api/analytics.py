@@ -13,7 +13,7 @@ from ..services import dashboard as dashboard_service
 from ..services import issues as issues_service
 from ..services import pnl as pnl_service
 from ..services import snapshots as snapshot_service
-from .deps import get_engagement, get_issue, get_snapshot
+from .deps import current_actor, get_engagement, get_issue, get_snapshot
 
 router = APIRouter(tags=["analytics"])
 
@@ -167,14 +167,16 @@ def resolve_issue(
     payload: IssueResolveIn,
     issue: Issue = Depends(get_issue),
     session: Session = Depends(get_session),
+    session_actor: str | None = Depends(current_actor),
 ):
+    actor = session_actor or payload.actor
     try:
         result = issues_service.resolve_issue(
             session,
             issue,
             selected_action=payload.selected_action,
             target_wbs_id=payload.target_wbs_id,
-            actor=payload.actor,
+            actor=actor,
         )
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
@@ -183,7 +185,7 @@ def resolve_issue(
         session,
         engagement,
         label=f"Issue #{issue.id} 조치: {payload.selected_action}",
-        actor=payload.actor,
+        actor=actor,
     )
     issues_service.refresh_action_items(session, engagement)
     result["snapshot_id"] = snapshot.id

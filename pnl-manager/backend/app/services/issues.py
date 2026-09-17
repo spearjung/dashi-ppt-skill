@@ -337,88 +337,98 @@ def resolve_issue(
 def refresh_action_items(session: Session, engagement: Engagement) -> list[Issue]:
     """조치사항 자동 등록(§FR-12).
 
-    LTD 필요액 > 0, 미청구액 > 기준치, Backlog 미입력, 이상징후 미해결 시
-    Billing·WIP 조치사항으로 등록한다.
+    LTD 필요액 > 0, 미청구액 > 기준치, Backlog 미입력 시 조치사항으로 등록한다.
+    조건이 해소된 조치사항은 자동으로 닫고, 조건이 남아 있으면 수치를 갱신한다.
+    EP가 이미 조치를 선택한 건은 다시 열지 않는다(선택 기록 보존).
     """
     pnl = compute(session, engagement)
     created: list[Issue] = []
 
-    def upsert(
-        *, issue_type: IssueType, severity: IssueSeverity, title: str, detail: str, actions: tuple[str, ...], dedup: str
-    ) -> None:
-        existing = session.execute(
-            select(Issue).where(Issue.engagement_id == engagement.id, Issue.dedup_key == dedup)
-        ).scalars().first()
-        if existing is not None:
+    #: 현재 성립하는 조치사항. (dedup_key → 등록 내용)
+    active: dict[str, dict] = {}
+
+    if pnl.ltd_outstanding > 0:
+        active["action:ltd_required"] = {
+            "type": IssueType.WIP_ACTION,
+            "severity": IssueSeverity.HIGH,
+            "title": f"LTD 잔여 상각 필요액 {pnl.ltd_outstanding:,}원 — 상각 또는 추가계약 결정 필요",
+            "detail": (
+                f"종료예상 사용액 {pnl.eac:,}원이 총 계약금액 {pnl.total_contract_amount:,}원을 "
+                f"초과합니다(LTD 필요액 {pnl.ltd_required:,}원, 기 조정 {pnl.ltd_adjusted:,}원). "
+                "추가계약으로 회수하거나 LTD 상각을 결정하십시오."
+            ),
+            "actions": ("request_change_order", "book_ltd", "reduce_mm"),
+        }
+
+    if pnl.unbilled_amount > config.UNBILLED_THRESHOLD:
+        active["action:unbilled"] = {
+            "type": IssueType.BILLING_ACTION,
+            "severity": IssueSeverity.HIGH,
+            "title": f"미청구액 {pnl.unbilled_amount:,}원이 기준치 초과",
+            "detail": (
+                f"기준치 {config.UNBILLED_THRESHOLD:,}원을 초과하는 미청구액이 있습니다"
+                f"(청구 예정 {pnl.total_planned_billing:,}원 / 청구 완료 {pnl.total_billing:,}원). "
+                "Billing 일정을 확인하십시오."
+            ),
+            "actions": ("issue_invoice", "check_billing_plan"),
+        }
+
+    if not pnl.backlog_entered:
+        active["action:backlog_missing"] = {
+            "type": IssueType.BACKLOG_MISSING,
+            "severity": IssueSeverity.MEDIUM,
+            "title": "Backlog 미입력 — 종료예상값이 잠정치",
+            "detail": "Backlog·Staffing 화면을 업로드하거나 잔여 MM을 직접 입력하십시오.",
+            "actions": ("upload_backlog", "enter_manually"),
+        }
+
+    existing_by_key = {
+        issue.dedup_key: issue
+        for issue in session.execute(
+            select(Issue).where(
+                Issue.engagement_id == engagement.id,
+                Issue.dedup_key.startswith("action:"),
+            )
+        ).scalars()
+    }
+
+    for dedup, spec in active.items():
+        issue = existing_by_key.get(dedup)
+        if issue is not None:
             # 수치는 항상 최신으로 갱신한다.
-            existing.title = title
-            existing.detail = detail
-            existing.severity = severity.value
+            issue.title = spec["title"]
+            issue.detail = spec["detail"]
+            issue.severity = spec["severity"].value
             # 이미 조치를 선택한 건은 다시 열지 않는다. 조치(예: 추가계약 추진)가
             # 반영되기까지 조건은 계속 성립하므로, 재오픈하면 EP의 의사결정 기록이
             # 사라진다. 조건 자체는 대시보드의 '조치 필요 프로젝트'가 별도로 노출한다.
-            if (
-                existing.status == IssueStatus.RESOLVED.value
-                and existing.selected_action is None
-            ):
-                existing.status = IssueStatus.OPEN.value
-                existing.resolved_at = None
-            return
+            if issue.status == IssueStatus.RESOLVED.value and issue.selected_action is None:
+                issue.status = IssueStatus.OPEN.value
+                issue.resolved_at = None
+            continue
         issue = Issue(
             engagement_id=engagement.id,
-            type=issue_type.value,
-            severity=severity.value,
-            title=title,
-            detail=detail,
-            suggested_actions=[{"key": a, "label": ACTION_LABELS.get(a, a)} for a in actions],
+            type=spec["type"].value,
+            severity=spec["severity"].value,
+            title=spec["title"],
+            detail=spec["detail"],
+            suggested_actions=[
+                {"key": a, "label": ACTION_LABELS.get(a, a)} for a in spec["actions"]
+            ],
             dedup_key=dedup,
         )
         session.add(issue)
         created.append(issue)
 
-    if pnl.ltd_outstanding > 0:
-        upsert(
-            issue_type=IssueType.WIP_ACTION,
-            severity=IssueSeverity.HIGH,
-            title=f"LTD 잔여 상각 필요액 {pnl.ltd_outstanding:,}원 — 상각 또는 추가계약 결정 필요",
-            detail=(
-                f"종료예상 사용액 {pnl.eac:,}원이 총 계약금액 {pnl.total_contract_amount:,}원을 "
-                f"초과합니다(LTD 필요액 {pnl.ltd_required:,}원, 기 조정 {pnl.ltd_adjusted:,}원). "
-                "추가계약으로 회수하거나 LTD 상각을 결정하십시오."
-            ),
-            actions=("request_change_order", "book_ltd", "reduce_mm"),
-            dedup="action:ltd_required",
-        )
-    if pnl.unbilled_amount > config.UNBILLED_THRESHOLD:
-        upsert(
-            issue_type=IssueType.BILLING_ACTION,
-            severity=IssueSeverity.HIGH,
-            title=f"미청구액 {pnl.unbilled_amount:,}원이 기준치 초과",
-            detail=(
-                f"기준치 {config.UNBILLED_THRESHOLD:,}원을 초과하는 미청구액이 있습니다. "
-                "Billing 일정을 확인하십시오."
-            ),
-            actions=("issue_invoice", "check_billing_plan"),
-            dedup="action:unbilled",
-        )
-    if not pnl.backlog_entered:
-        upsert(
-            issue_type=IssueType.BACKLOG_MISSING,
-            severity=IssueSeverity.MEDIUM,
-            title="Backlog 미입력 — 종료예상값이 잠정치",
-            detail="Backlog·Staffing 화면을 업로드하거나 잔여 MM을 직접 입력하십시오.",
-            actions=("upload_backlog", "enter_manually"),
-            dedup="action:backlog_missing",
-        )
-    else:
-        stale = session.execute(
-            select(Issue).where(
-                Issue.engagement_id == engagement.id, Issue.dedup_key == "action:backlog_missing"
-            )
-        ).scalars().first()
-        if stale is not None and stale.status == IssueStatus.OPEN.value:
-            stale.status = IssueStatus.RESOLVED.value
-            stale.resolved_at = datetime.now()
+    # 조건이 해소된 조치사항은 닫는다. 열어 둔 채 수치만 남기면 이미 해결된 항목이
+    # 낡은 금액으로 계속 표시된다.
+    for dedup, issue in existing_by_key.items():
+        if dedup in active or issue.status != IssueStatus.OPEN.value:
+            continue
+        issue.status = IssueStatus.RESOLVED.value
+        issue.resolved_at = datetime.now()
+        issue.selected_action = issue.selected_action or "condition_cleared"
+        issue.detail = f"{issue.detail or ''}\n조건이 해소되어 자동으로 닫혔습니다.".strip()
 
     session.flush()
     return created

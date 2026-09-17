@@ -28,14 +28,27 @@ export class ApiError extends Error {
   }
 }
 
+/** 401 응답 구독. 세션이 끊기면 앱이 로그인 화면으로 돌아간다. */
+const unauthorizedHandlers = new Set<() => void>()
+
+export function onUnauthorized(handler: () => void): () => void {
+  unauthorizedHandlers.add(handler)
+  return () => unauthorizedHandlers.delete(handler)
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${BASE}${path}`, {
     ...init,
+    // 세션 쿠키를 항상 함께 보낸다.
+    credentials: 'same-origin',
     headers:
       init?.body instanceof FormData
         ? init?.headers
         : { 'Content-Type': 'application/json', ...init?.headers },
   })
+  if (response.status === 401 && !path.startsWith('/auth/')) {
+    unauthorizedHandlers.forEach((handler) => handler())
+  }
   if (!response.ok) {
     let detail = `요청이 실패했습니다 (HTTP ${response.status})`
     try {
@@ -51,8 +64,29 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T
 }
 
+export interface SessionState {
+  authenticated: boolean
+  name: string | null
+  auth_required: boolean
+}
+
 export const api = {
-  health: () => request<{ status: string; formula_version: string; ocr_provider: string }>('/health'),
+  health: () =>
+    request<{
+      status: string
+      formula_version: string
+      ocr_provider: string
+      auth_required: boolean
+    }>('/health'),
+
+  // 인증
+  getSession: () => request<SessionState>('/auth/session'),
+  login: (name: string, password: string) =>
+    request<SessionState>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ name, password }),
+    }),
+  logout: () => request<SessionState>('/auth/logout', { method: 'POST' }),
 
   // 프로젝트 마스터
   listEngagements: () => request<Engagement[]>('/engagements'),

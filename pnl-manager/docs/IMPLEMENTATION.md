@@ -19,6 +19,19 @@ PRD의 각 요구사항이 어디에 구현되고 무엇으로 검증되는지 �
 | FR-11 시나리오 계산기 | `calc/scenario.py`, `pages/ScenarioPage.tsx` | `test_formulas.py::test_scenario_*` |
 | FR-12 대시보드·조치사항 | `services/dashboard.py`, `services/issues.py::refresh_action_items`, `pages/DashboardPage.tsx` | `test_e2e_kor01434.py::test_action_items_registered` |
 
+## 웹 배포 (PRD 범위 확장)
+
+PRD는 로컬 실행을 전제했으나 웹 서비스로 운영하기로 정해 다음을 추가했다.
+
+| 항목 | 구현 | 검증 |
+|---|---|---|
+| 공용 비밀번호 인증 | `auth.py`(HMAC 서명 세션·시도 제한), `api/auth.py`, `pages/LoginPage.tsx` | `test_auth.py` (13건), `frontend/tests/auth-smoke.mjs` (9건) |
+| 단일 오리진 SPA 서빙 | `main.py` — `PNL_STATIC_DIR` 존재 시 정적 자원과 SPA 폴백 제공 | `auth-smoke.mjs`, 경로 이탈 차단 테스트 |
+| 보안 헤더·API 명세 보호 | `main.py::security_and_auth` — CSP·XFO·nosniff, 인증 시 `/docs` 차단 | `test_auth.py::test_api_docs_are_protected` |
+| 업로드 검증 | `services/uploads.py` — 크기 상한과 magic byte 확인 | `test_verification_flow.py`, `test_auth.py` |
+| 컨테이너·호스팅 | `Dockerfile`(멀티스테이지), `docker-compose.yml`, `fly.toml`, `render.yaml` | 런타임 구성은 실제 실행으로 확인, 이미지 빌드는 미검증(§미구현 범위) |
+| PostgreSQL | `PNL_DATABASE_URL` + `requirements-postgres.txt` | SQLite에서만 실행 검증 |
+
 ## 비기능 요구사항
 
 | 요구 | 구현 |
@@ -36,8 +49,9 @@ PRD가 열어 둔 부분에 대해 구현이 택한 해석이다. 변경 시 이
 
 1. **WBS 단위 LTD 배분** — PRD §3.2의 LTD는 Engagement 단위 산식이지만 §12는 WBS별
    예상 LTD를 요구한다. 계약금액을 보유한 단위는 계약 차수이므로 LTD는 차수 단위로
-   계산하고, 차수에 WBS가 여럿이면 사용액 비율로 계약금액을 배분한다. WBS가 하나인
-   경우 전액이 배분되어 §12 기대값과 일치한다. (`calc/formulas.py`)
+   계산한다. 차수당 WBS 다중 구성은 예외로 확인되어 균등 분할하고 경고를 남긴다.
+   정상 구성(차수당 WBS 1개)에서는 전액이 배분되어 §12 기대값과 일치한다.
+   (`calc/formulas.py`)
 2. **차수 간 비상계** — Engagement LTD 필요액은 차수별 초과분의 합이다. 1차가 초과하고
    2차에 잔액이 있어도 상계하지 않는다. 상계하면 초과 차수의 상각 필요액이 감춰진다.
 3. **기간 오류와 귀속 오류의 구분** — 발생 기간이 WBS 유효기간 이후이고 **다음 차수 WBS가
@@ -62,13 +76,37 @@ PRD가 열어 둔 부분에 대해 구현이 택한 해석이다. 변경 시 이
 10. **WBS Code 접두사 매칭** — 화면 코드가 마스터보다 하위 레벨까지 표기되므로
     (마스터 `KOR01434-01-01` / 화면 `KOR01434-01-01-01-1000`) 정확 일치 → 마스터가 화면
     코드의 접두사 → 화면 코드가 마스터의 접두사 순으로 찾는다.
+11. **Billing 항목 유형 확장** — Billing 금액이 화면 캡처로 들어오므로 PRD §6.2의
+    item_type 열거값에 `billing_planned`(청구 예정액)·`billing_unbilled`(미청구액)·
+    `billable_expense`(청구가능 경비)를 더했다. `billing`은 청구 완료액으로 좁혀
+    BILLING_PLAN의 네 속성과 1:1 대응한다. 청구 예정액·미청구액은 손익 판단에 직접
+    쓰이므로 고영향 필드로 다룬다.
+12. **Billing 값의 단일 출처** — Billing 화면에서 만들어진 계획(BillingPlan)이 있으면
+    그 값만 쓰고, 없을 때만 WIP 등 다른 화면의 `billing` 항목을 쓴다. 두 경로를 함께
+    더하면 같은 청구액이 중복 집계된다. 미청구액은 화면 표시값을 우선하고, 없을 때만
+    누적 사용액 − 청구액으로 계산한다.
+13. **조치사항의 조건 해소 처리** — 조건이 사라진 조치사항은 자동으로 닫고
+    `selected_action=condition_cleared`로 기록한다. 열어 둔 채 수치만 갱신하면 이미
+    해결된 항목이 낡은 금액으로 계속 남는다. 반대로 EP가 조치를 선택한 건은 조건이
+    남아 있어도 재오픈하지 않는다(의사결정 기록 보존).
+14. **행위자 기록의 출처** — 인증이 켜지면 확정·수정 기록의 행위자는 세션의 로그인
+    이름이며 요청 본문 값보다 우선한다. 본문 값은 위조할 수 있다. 공용 비밀번호
+    방식이므로 이름은 자기 신고값이고, 개인별 책임 추적에는 계정 전환이 필요하다.
 
 ## 미구현 범위
 
-- **인증·권한** — 로컬 단일 사용자 전제(PRD §2.2). 행위자명은 요청 본문으로 받아
-  `confirmed_by`·`AuditLog.actor` 에 기록하되 검증하지 않는다. EM 위임(2단계)과 사내 서버
-  배포 시 인증 도입이 필요하다.
-- **로컬 암호화 볼륨**(§8.2) — OS·디스크 수준 설정이므로 애플리케이션 범위 밖이다.
+- **개인별 계정·권한** — 공용 비밀번호 하나로 운영하므로 비밀번호를 아는 사람은 모두 같은
+  권한을 갖는다. 행위자 이름은 로그인 시 자기 신고값이다. EP·EM 역할 구분과 개인별 책임
+  추적이 필요하면 사용자별 계정 또는 사내 SSO로 전환해야 한다.
+- **컨테이너 이미지 빌드 검증** — Dockerfile·compose·호스팅 설정을 작성했으나 이 환경에
+  Docker 데몬이 없어 이미지 빌드는 실행하지 못했다. 이미지가 하는 일(프런트엔드 빌드,
+  단일 오리진 서빙, 인증, 보안 헤더, SPA 폴백)은 같은 구성으로 프로세스를 띄워 확인했다.
+  첫 배포 시 빌드 로그를 확인해야 한다.
+- **PostgreSQL 실행 검증** — 드라이버와 접속 문자열 경로는 마련했으나 검증은 SQLite에서만
+  수행했다. 첫 배포 후 스키마 생성과 손익 계산 결과를 확인해야 한다.
+- **수평 확장** — 로그인 시도 제한 카운터가 프로세스 메모리에, 캡처 원본이 인스턴스 로컬
+  디스크에 있다. 인스턴스를 늘리려면 파일 저장소와 카운터를 외부로 분리해야 한다.
+- **로컬 암호화 볼륨**(PRD §8.2) — OS·디스크 수준 설정이므로 애플리케이션 범위 밖이다.
+  클라우드 호스팅에서는 제공자의 저장 암호화에 의존한다.
 - **PaddleOCR 대체 엔진**(§8.1) — 어댑터 인터페이스(`ocr/providers.py`)만 마련했다.
-  `OcrProvider` 프로토콜을 구현하고 `_REGISTRY` 에 등록하면 추가된다.
-- **PostgreSQL** — `PNL_DATABASE_URL` 로 전환 가능하나 검증은 SQLite에서만 수행했다.
+  `OcrProvider` 프로토콜을 구현하고 `_REGISTRY`에 등록하면 추가된다.

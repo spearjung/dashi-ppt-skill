@@ -134,6 +134,8 @@ class WbsResult:
     ltd_adjusted: int
     ltd_outstanding: int
     unbilled_amount: int
+    planned_billing: int = 0
+    billable_expense: int = 0
     warnings: list[str] = field(default_factory=list)
 
     def as_dict(self) -> dict:
@@ -158,6 +160,8 @@ class WbsResult:
             "ltd_adjusted": self.ltd_adjusted,
             "ltd_outstanding": self.ltd_outstanding,
             "unbilled_amount": self.unbilled_amount,
+            "planned_billing": self.planned_billing,
+            "billable_expense": self.billable_expense,
             "warnings": self.warnings,
         }
 
@@ -218,6 +222,8 @@ class EngagementPnl:
     weighted_average_rate: int | None
     expected_margin_rate: float | None
     unbilled_amount: int
+    total_planned_billing: int
+    total_billable_expense: int
     contracts: list[ContractResult]
     wbs_results: list[WbsResult]
     warnings: list[str] = field(default_factory=list)
@@ -248,6 +254,8 @@ class EngagementPnl:
             "weighted_average_rate": self.weighted_average_rate,
             "expected_margin_rate": self.expected_margin_rate,
             "unbilled_amount": self.unbilled_amount,
+            "total_planned_billing": self.total_planned_billing,
+            "total_billable_expense": self.total_billable_expense,
             "contracts": [c.as_dict() for c in self.contracts],
             "wbs_results": [w.as_dict() for w in self.wbs_results],
             "warnings": self.warnings,
@@ -329,11 +337,9 @@ def compute_pnl(data: PnlInput) -> EngagementPnl:
     for adj in data.ltd_adjustments:
         ltd_by_wbs[adj.wbs_id] = ltd_by_wbs.get(adj.wbs_id, 0) + int(adj.amount)
 
-    # 차수별 계약금액을 소속 WBS에 사용액 비율로 배분한다. WBS가 하나면 전액 배분된다.
-    usage_by_wbs: dict[int, int] = {}
-    for wbs in data.wbs_list:
-        usage_by_wbs[wbs.id] = sum(amounts.get((wbs.id, key), 0) for key in _COST_KEYS)
-
+    # 계약금액은 계약 차수가 보유하므로 WBS별 계약금액은 차수 금액을 배분해 얻는다.
+    # 실제 운영에서 한 차수에 WBS가 여럿인 경우는 예외적이므로 균등 분할하고
+    # 경고를 남긴다(배분 기준이 필요하면 그때 정의한다).
     wbs_by_contract: dict[int, list[WbsInput]] = {}
     for wbs in data.wbs_list:
         wbs_by_contract.setdefault(wbs.contract_id, []).append(wbs)
@@ -342,23 +348,18 @@ def compute_pnl(data: PnlInput) -> EngagementPnl:
     for contract_id, members in wbs_by_contract.items():
         contract = contracts_by_id.get(contract_id)
         total_amount = contract.amount if contract else 0
-        member_usage = {w.id: usage_by_wbs.get(w.id, 0) for w in members}
-        usage_sum = sum(member_usage.values())
         if len(members) == 1:
             allocation[members[0].id] = total_amount
-        elif usage_sum > 0:
-            assigned = 0
-            for w in members[:-1]:
-                share = int(round(total_amount * member_usage[w.id] / usage_sum))
-                allocation[w.id] = share
-                assigned += share
-            allocation[members[-1].id] = total_amount - assigned
-        else:
-            share = total_amount // len(members) if members else 0
-            for w in members[:-1]:
-                allocation[w.id] = share
-            if members:
-                allocation[members[-1].id] = total_amount - share * (len(members) - 1)
+            continue
+        share = total_amount // len(members)
+        for member in members[:-1]:
+            allocation[member.id] = share
+        allocation[members[-1].id] = total_amount - share * (len(members) - 1)
+        warnings.append(
+            f"계약 차수 {contract.seq if contract else '?'}차에 WBS가 "
+            f"{len(members)}개 있어 계약금액을 균등 분할했습니다. "
+            "WBS별 계약금액 배분 기준을 확인하십시오."
+        )
 
     wbs_results: list[WbsResult] = []
     for wbs in data.wbs_list:
@@ -372,20 +373,25 @@ def compute_pnl(data: PnlInput) -> EngagementPnl:
         os_amount = wbs_amounts.get(ItemType.OS.value, 0)
         cumulative_usage = time_amount + expense_amount + os_amount
 
+        # Billing 값의 출처 우선순위: Billing 화면에서 만들어진 계획(BillingPlan) →
+        # 없으면 WIP 등 다른 화면의 billing 항목. 같은 값을 두 경로로 중복 합산하지
+        # 않도록 한쪽만 채택한다. 계획이 등록돼 있으면 0원 계획도 그대로 쓴다.
         billing_plans = billing_by_wbs.get(wbs.id, [])
-        billing_from_records = wbs_amounts.get(ItemType.BILLING.value, 0)
-        billed_from_plans = sum(p.billed_amount for p in billing_plans)
-        billing_amount = max(billing_from_records, billed_from_plans)
-        # Billing 계획이 등록돼 있으면 계획액을 그대로 쓴다(0으로 입력된 경우 포함).
-        # 계획이 아예 없을 때만 실적 청구액으로 대체한다.
-        planned_billing = (
-            sum(p.planned_amount for p in billing_plans) if billing_plans else billing_amount
-        )
-        unbilled = (
-            sum(p.unbilled for p in billing_plans)
-            if billing_plans
-            else max(0, cumulative_usage - billing_amount)
-        )
+        if billing_plans:
+            billing_amount = sum(p.billed_amount for p in billing_plans)
+            planned_billing = sum(p.planned_amount for p in billing_plans)
+            unbilled = sum(p.unbilled for p in billing_plans)
+            billable_expense = sum(p.billable_expense for p in billing_plans)
+        else:
+            billing_amount = wbs_amounts.get(ItemType.BILLING.value, 0)
+            planned_billing = wbs_amounts.get(ItemType.BILLING_PLANNED.value, billing_amount)
+            screen_unbilled = wbs_amounts.get(ItemType.BILLING_UNBILLED.value)
+            unbilled = (
+                screen_unbilled
+                if screen_unbilled is not None
+                else max(0, cumulative_usage - billing_amount)
+            )
+            billable_expense = wbs_amounts.get(ItemType.BILLABLE_EXPENSE.value, 0)
 
         current_wip = time_amount + expense_amount - billing_amount
         screen_wip = wbs_amounts.get(ItemType.WIP.value)
@@ -433,6 +439,8 @@ def compute_pnl(data: PnlInput) -> EngagementPnl:
                 ltd_adjusted=ltd_adjusted,
                 ltd_outstanding=max(0, ltd_required - ltd_adjusted),
                 unbilled_amount=unbilled,
+                planned_billing=planned_billing,
+                billable_expense=billable_expense,
                 warnings=wbs_warnings,
             )
         )
@@ -465,9 +473,8 @@ def compute_pnl(data: PnlInput) -> EngagementPnl:
     total_contract = sum(c.amount for c in data.contracts)
     cumulative_usage = sum(r.cumulative_usage for r in wbs_results)
     total_billing = sum(r.billing for r in wbs_results)
-    total_planned_billing = (
-        sum(p.planned_amount for p in data.billing) if data.billing else total_billing
-    )
+    total_billable_expense = sum(r.billable_expense for r in wbs_results)
+    total_planned_billing = sum(r.planned_billing for r in wbs_results)
     remaining_estimate = sum(r.remaining_input_estimate for r in wbs_results)
     backlog_entered = any(r.backlog_entered for r in wbs_results)
     eac = cumulative_usage + remaining_estimate
@@ -533,6 +540,8 @@ def compute_pnl(data: PnlInput) -> EngagementPnl:
             round((total_contract - eac) / total_contract, 6) if total_contract else None
         ),
         unbilled_amount=sum(r.unbilled_amount for r in wbs_results),
+        total_planned_billing=total_planned_billing,
+        total_billable_expense=total_billable_expense,
         contracts=contract_results,
         wbs_results=wbs_results,
         warnings=warnings,

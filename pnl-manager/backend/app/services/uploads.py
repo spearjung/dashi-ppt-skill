@@ -17,6 +17,19 @@ from . import audit
 
 ALLOWED_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp"}
 
+#: 확장자를 믿지 않고 실제 바이트로 이미지 형식을 확인한다.
+MAGIC_SIGNATURES: tuple[tuple[bytes, str], ...] = (
+    (b"\x89PNG\r\n\x1a\n", "png"),
+    (b"\xff\xd8\xff", "jpeg"),
+)
+
+
+def _looks_like_image(content: bytes) -> bool:
+    if any(content.startswith(magic) for magic, _ in MAGIC_SIGNATURES):
+        return True
+    # WEBP: RIFF....WEBP
+    return content[:4] == b"RIFF" and content[8:12] == b"WEBP"
+
 
 class UploadError(ValueError):
     pass
@@ -45,6 +58,16 @@ def store_upload(
         raise UploadError(f"지원하지 않는 형식입니다: {suffix or filename} (PNG·JPG·WEBP)")
     if not content:
         raise UploadError("빈 파일입니다.")
+    if len(content) > config.MAX_UPLOAD_BYTES:
+        limit_mb = config.MAX_UPLOAD_BYTES / (1024 * 1024)
+        raise UploadError(
+            f"파일이 너무 큽니다({len(content) / (1024 * 1024):.1f}MB). "
+            f"{limit_mb:.0f}MB 이하로 캡처하십시오."
+        )
+    if not _looks_like_image(content):
+        raise UploadError(
+            "이미지 파일로 인식되지 않습니다. 확장자를 바꾼 다른 형식의 파일인지 확인하십시오."
+        )
 
     digest = image_hash(content)
     existing = session.execute(

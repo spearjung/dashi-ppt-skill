@@ -24,7 +24,7 @@ from ..services import issues as issues_service
 from ..services import pnl as pnl_service
 from ..services import snapshots as snapshot_service
 from ..services import verification
-from .deps import get_upload
+from .deps import current_actor, get_upload
 
 router = APIRouter(tags=["verify"])
 
@@ -94,6 +94,7 @@ def apply_decisions(
     payload: DecisionBatch,
     upload: Upload = Depends(get_upload),
     session: Session = Depends(get_session),
+    actor: str | None = Depends(current_actor),
 ):
     """값별 액션 6종을 일괄 적용한다."""
     by_id = {r.id: r for r in upload.ocr_records}
@@ -121,7 +122,7 @@ def apply_decisions(
                     note=decision.note,
                     change_link_id=decision.change_link_id,
                 ),
-                payload.actor,
+                actor or payload.actor,
             )
         except verification.VerificationError as exc:
             raise HTTPException(422, str(exc)) from exc
@@ -137,6 +138,7 @@ def add_manual_record(
     payload: ManualRecordIn,
     upload: Upload = Depends(get_upload),
     session: Session = Depends(get_session),
+    actor: str | None = Depends(current_actor),
 ):
     """판독 실패값·미판독값을 직접 입력한다."""
     try:
@@ -152,7 +154,7 @@ def add_manual_record(
             period_from=payload.period_from,
             period_to=payload.period_to,
             raw_label=payload.raw_label,
-            actor=payload.actor,
+            actor=actor or payload.actor,
         )
     except verification.VerificationError as exc:
         raise HTTPException(422, str(exc)) from exc
@@ -165,10 +167,12 @@ def confirm(
     payload: ConfirmIn,
     upload: Upload = Depends(get_upload),
     session: Session = Depends(get_session),
+    session_actor: str | None = Depends(current_actor),
 ):
     """Upload 단위 확정 → Snapshot 생성 → 계산·조치사항 갱신(§Step 5)."""
+    actor = session_actor or payload.actor
     try:
-        verification.confirm_upload(session, upload, actor=payload.actor, force=payload.force)
+        verification.confirm_upload(session, upload, actor=actor, force=payload.force)
     except verification.VerificationError as exc:
         raise HTTPException(409, str(exc)) from exc
 
@@ -181,11 +185,11 @@ def confirm(
             session,
             engagement,
             label=payload.label or f"Upload #{upload.id} 확정",
-            actor=payload.actor,
+            actor=actor,
         )
         diff = snapshot_service.diff_snapshots(previous, snapshot)
 
-    created = issues_service.scan_upload(session, upload, actor=payload.actor)
+    created = issues_service.scan_upload(session, upload, actor=actor)
     created += issues_service.refresh_action_items(session, engagement)
     session.flush()
 

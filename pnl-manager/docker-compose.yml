@@ -1,0 +1,48 @@
+# 로컬·사내 서버에서 앱과 PostgreSQL을 함께 띄우는 구성.
+# 클라우드 호스팅은 관리형 DB를 쓰므로 app 서비스만 배포하고
+# PNL_DATABASE_URL로 그 DB를 가리킨다.
+
+services:
+  app:
+    build: .
+    ports:
+      - "${PNL_PORT:-8000}:8000"
+    environment:
+      # ── 필수: 공용 비밀번호(12자 이상). 설정하지 않으면 기동을 거부한다.
+      PNL_APP_PASSWORD: ${PNL_APP_PASSWORD:?PNL_APP_PASSWORD를 설정하십시오 (12자 이상)}
+      # ── 세션 서명 키. 지정하지 않으면 비밀번호에서 파생한다.
+      PNL_SECRET_KEY: ${PNL_SECRET_KEY:-}
+      # ── HTTPS 뒤에 둘 때만 1. 평문 HTTP로 접근하면 쿠키가 전송되지 않는다.
+      PNL_SECURE_COOKIES: ${PNL_SECURE_COOKIES:-0}
+      PNL_DATABASE_URL: postgresql+psycopg://pnl:${POSTGRES_PASSWORD:-pnl-local}@db:5432/pnl
+      PNL_OCR_PROVIDER: ${PNL_OCR_PROVIDER:-claude}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      PNL_UNBILLED_THRESHOLD: ${PNL_UNBILLED_THRESHOLD:-50000000}
+      # 같은 오리진에서 SPA를 서빙하므로 CORS는 비운다.
+      PNL_CORS_ORIGINS: ""
+    volumes:
+      # 캡처 원본은 파일로 보관된다. 볼륨 없이 재배포하면 이미지가 사라진다.
+      - pnl-uploads:/data
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: pnl
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pnl-local}
+      POSTGRES_DB: pnl
+    volumes:
+      - pnl-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pnl -d pnl"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pnl-uploads:
+  pnl-db:
