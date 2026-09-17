@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import html
 import json
 from pathlib import Path
 
@@ -33,6 +34,18 @@ from .services import pnl as pnl_service
 from .services import snapshots as snapshot_service
 from .services import uploads as upload_service
 from .services import verification
+
+#: 스프레드시트에서 수식으로 해석되는 선행 문자. 판독 텍스트가 그대로 들어가므로
+#: 내보낼 때 무력화한다(Excel·Sheets의 수식 주입 방지).
+FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def csv_safe(value):
+    """CSV 셀 값을 안전하게 만든다. 수식으로 시작하면 앞에 작은따옴표를 붙인다."""
+    if not isinstance(value, str) or not value:
+        return value
+    return f"'{value}" if value.startswith(FORMULA_PREFIXES) else value
+
 
 CSV_COLUMNS = [
     "ocr_record_id",
@@ -184,7 +197,7 @@ def cmd_export_csv(args) -> None:
         with target.open("w", newline="", encoding="utf-8-sig") as handle:
             writer = csv.DictWriter(handle, fieldnames=CSV_COLUMNS)
             writer.writeheader()
-            writer.writerows(rows)
+            writer.writerows({k: csv_safe(v) for k, v in row.items()} for row in rows)
         print(f"{len(rows)}행을 {target}에 저장했습니다.")
         print("action 열을 confirm/edit/exclude/reassign/duplicate 중 하나로 편집하십시오.")
         print("edit 시 amount 열을 원 단위 정수로, reassign 시 wbs_code 열을 수정하십시오.")
@@ -264,8 +277,16 @@ def _render_html(engagement, pnl, scenarios, open_issues, snapshot) -> str:
     def krw(value):
         return "-" if value is None else f"{value:,}"
 
+    def esc(value) -> str:
+        """HTML로 출력하는 모든 문자열을 이스케이프한다.
+
+        WBS Code·화면 항목명·이상징후 내용은 판독 결과에서 오므로 HTML 태그가
+        섞여 들어갈 수 있다. 리포트를 브라우저로 열기 때문에 그대로 넣으면 안 된다.
+        """
+        return html.escape("" if value is None else str(value), quote=True)
+
     wbs_rows = "".join(
-        f"<tr><td>{w.code}</td><td class='n'>{w.contract_seq}차</td>"
+        f"<tr><td>{esc(w.code)}</td><td class='n'>{esc(w.contract_seq)}차</td>"
         f"<td class='n'>{krw(w.allocated_contract_amount)}</td>"
         f"<td class='n'>{krw(w.cumulative_usage)}</td>"
         f"<td class='n'>{krw(w.remaining_input_estimate)}"
@@ -284,7 +305,7 @@ def _render_html(engagement, pnl, scenarios, open_issues, snapshot) -> str:
         return "-" if value is None else f"{value:,.2f}"
 
     scenario_rows = "".join(
-        f"<tr><td>{s['kind']}</td><td class='n'>{krw(s['eac'])}</td>"
+        f"<tr><td>{esc(s['kind'])}</td><td class='n'>{krw(s['eac'])}</td>"
         f"<td class='n'>{krw(s['expected_end_wip'])}</td>"
         f"<td class='n'>{krw(s['ltd_required'])}</td>"
         f"<td class='n'>{krw(s['additional_contract_needed'])}</td>"
@@ -293,14 +314,15 @@ def _render_html(engagement, pnl, scenarios, open_issues, snapshot) -> str:
         for s in scenarios
     )
     issue_rows = "".join(
-        f"<tr><td>{i.type}</td><td>{i.severity}</td><td>{i.title}</td><td>{i.detail or ''}</td></tr>"
+        f"<tr><td>{esc(i.type)}</td><td>{esc(i.severity)}</td>"
+        f"<td>{esc(i.title)}</td><td>{esc(i.detail or '')}</td></tr>"
         for i in open_issues
     ) or "<tr><td colspan=4>미해결 이상징후 없음</td></tr>"
-    warnings = "".join(f"<li>{w}</li>" for w in pnl.warnings) or "<li>없음</li>"
+    warnings = "".join(f"<li>{esc(w)}</li>" for w in pnl.warnings) or "<li>없음</li>"
 
     return f"""<!doctype html>
 <html lang="ko"><head><meta charset="utf-8">
-<title>{engagement.name} 손익 리포트</title>
+<title>{esc(engagement.name)} 손익 리포트</title>
 <style>
  body {{ font-family: -apple-system, 'Malgun Gothic', sans-serif; margin: 32px; color: #1a1a1a; }}
  h1 {{ font-size: 20px; border-bottom: 2px solid #006940; padding-bottom: 8px; }}
@@ -317,8 +339,8 @@ def _render_html(engagement, pnl, scenarios, open_issues, snapshot) -> str:
  .kpi span {{ font-size: 11px; color: #666; }}
  ul.note {{ font-size: 12px; color: #555; }}
 </style></head><body>
-<h1>{engagement.name} ({engagement.engagement_code}) 손익 리포트</h1>
-<p>고객사 {engagement.client} · 계약유형 {engagement.contract_type} · EP {engagement.ep or '-'}
+<h1>{esc(engagement.name)} ({esc(engagement.engagement_code)}) 손익 리포트</h1>
+<p>고객사 {esc(engagement.client)} · 계약유형 {esc(engagement.contract_type)} · EP {esc(engagement.ep or '-')}
    · 계약기간 {engagement.start_date} ~ {engagement.end_date}<br>
    최신 Snapshot #{snapshot.id if snapshot else '-'}
    (기준일 {snapshot.as_of_date if snapshot and snapshot.as_of_date else '-'})

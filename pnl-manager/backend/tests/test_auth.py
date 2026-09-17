@@ -217,3 +217,16 @@ def test_static_path_traversal_falls_back_to_index(secure_client, tmp_path, monk
     response = secure_client.get("/../../etc/passwd")
     assert response.status_code in (200, 404)
     assert "root:" not in response.text
+
+
+def test_wildcard_cors_is_refused(monkeypatch):
+    """세션 쿠키를 쓰므로 모든 출처 허용은 기동을 막는다."""
+    monkeypatch.setenv("PNL_CORS_ORIGINS", "*")
+    from app import config
+
+    importlib.reload(config)
+    with pytest.raises(config.ConfigError, match="와일드카드"):
+        config.validate()
+
+    monkeypatch.delenv("PNL_CORS_ORIGINS", raising=False)
+    importlib.reload(config)

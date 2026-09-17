@@ -112,6 +112,13 @@ def validate() -> list[str]:
             "인증이 꺼져 있습니다. 웹에 노출되는 환경이라면 PNL_APP_PASSWORD를 설정하십시오."
         )
 
+    if "*" in CORS_ORIGINS:
+        raise ConfigError(
+            "PNL_CORS_ORIGINS에 와일드카드(*)를 쓸 수 없습니다. 세션 쿠키를 사용하므로 "
+            "모든 출처를 허용하면 다른 사이트가 사용자의 세션으로 API를 호출할 수 있습니다. "
+            "같은 오리진에서 SPA를 서빙한다면 빈 값으로 두십시오."
+        )
+
     if OCR_PROVIDER == "claude" and not (
         os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")
     ):

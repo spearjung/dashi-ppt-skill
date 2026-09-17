@@ -29,6 +29,8 @@ PRD는 로컬 실행을 전제했으나 웹 서비스로 운영하기로 정해 
 | 단일 오리진 SPA 서빙 | `main.py` — `PNL_STATIC_DIR` 존재 시 정적 자원과 SPA 폴백 제공 | `auth-smoke.mjs`, 경로 이탈 차단 테스트 |
 | 보안 헤더·API 명세 보호 | `main.py::security_and_auth` — CSP·XFO·nosniff, 인증 시 `/docs` 차단 | `test_auth.py::test_api_docs_are_protected` |
 | 업로드 검증 | `services/uploads.py` — 크기 상한과 magic byte 확인 | `test_verification_flow.py`, `test_auth.py` |
+| 산출물 주입 차단 | `cli.py` — HTML 리포트 이스케이프, CSV 수식 접두사 무력화 | `test_cli.py::test_csv_export_neutralises_spreadsheet_formulas`, `::test_html_report_escapes_read_text` |
+| CORS 오설정 차단 | `config.validate()` — 와일드카드 출처 + 쿠키 조합 거부 | `test_auth.py::test_wildcard_cors_is_refused` |
 | 컨테이너·호스팅 | `Dockerfile`(멀티스테이지), `docker-compose.yml`, `fly.toml`, `render.yaml` | 런타임 구성은 실제 실행으로 확인, 이미지 빌드는 미검증(§미구현 범위) |
 | PostgreSQL | `PNL_DATABASE_URL` + `requirements-postgres.txt` | SQLite에서만 실행 검증 |
 

@@ -100,3 +100,47 @@ def test_cli_rejects_unknown_engagement(workspace):
 
     with pytest.raises(SystemExit):
         cli.main(["report", "NOPE", str(workspace / "x.html")])
+
+
+def test_csv_export_neutralises_spreadsheet_formulas():
+    """판독 텍스트가 스프레드시트 수식으로 실행되지 않도록 무력화한다."""
+    from app.cli import csv_safe
+
+    assert csv_safe("=HYPERLINK(\"http://evil\",\"click\")") == "'=HYPERLINK(\"http://evil\",\"click\")"
+    assert csv_safe("+1+1") == "'+1+1"
+    assert csv_safe("-2") == "'-2"
+    assert csv_safe("@SUM(A1)") == "'@SUM(A1)"
+    # 정상 값은 그대로 둔다
+    assert csv_safe("Time") == "Time"
+    assert csv_safe("263,746,000") == "263,746,000"
+    assert csv_safe("") == ""
+    assert csv_safe(None) is None
+    assert csv_safe(1234) == 1234
+
+
+def test_html_report_escapes_read_text(workspace, session):
+    """판독 텍스트의 HTML 태그가 리포트에서 실행되지 않는다."""
+    from app import cli
+    from app.models import Engagement, Issue
+
+    cli.main(["create-project", str(workspace / "project.json")])
+    engagement = session.query(Engagement).filter_by(engagement_code="KOR01434").one()
+    session.add(
+        Issue(
+            engagement_id=engagement.id,
+            type="wbs_attribution",
+            severity="high",
+            title="<img src=x onerror=alert(1)>",
+            detail="<script>alert('xss')</script>",
+            related_record_ids=[],
+            suggested_actions=[],
+        )
+    )
+    session.commit()
+
+    report = workspace / "escaped.html"
+    cli.main(["report", "KOR01434", str(report)])
+    html = report.read_text(encoding="utf-8")
+    assert "<script>alert" not in html
+    assert "<img src=x onerror" not in html
+    assert "&lt;script&gt;" in html
