@@ -1,0 +1,67 @@
+{
+  "screen_type": "wip",
+  "screen_title": "Work In Progress (단위: 원)",
+  "as_of_date": "2025-12-31",
+  "unit": "KRW",
+  "rows": [
+    {
+      "row_index": 1,
+      "wbs_code": {
+        "value": "KOR01434-01-02-01-1000",
+        "confidence": "high"
+      },
+      "period": {
+        "from": "2025-11-01",
+        "to": "2025-12-31"
+      },
+      "value_basis": "period",
+      "fields": [
+        {
+          "item_type": "time",
+          "raw_label": "Time",
+          "amount": 72000000,
+          "confidence": "high"
+        },
+        {
+          "item_type": "expense",
+          "raw_label": "Expense",
+          "amount": 5629160,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "row_index": 2,
+      "wbs_code": {
+        "value": "KOR01434-01-02-01-1000",
+        "confidence": "high"
+      },
+      "period": {
+        "from": "2025-11-01",
+        "to": "2025-12-31"
+      },
+      "value_basis": "period",
+      "fields": [
+        {
+          "item_type": "ltd",
+          "raw_label": "LTD Adjustment",
+          "amount": 10000000,
+          "confidence": "high"
+        },
+        {
+          "item_type": "contract_amount",
+          "raw_label": "Change Order Amount",
+          "amount": 50000000,
+          "confidence": "high"
+        }
+      ]
+    }
+  ],
+  "totals": [
+    {
+      "raw_label": "Total",
+      "amount": 77629160,
+      "row_index": 1
+    }
+  ]
+}

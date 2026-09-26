@@ -1,0 +1,7 @@
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+sqlalchemy==2.0.54
+pydantic==2.13.5
+python-multipart==0.0.20
+# 외부 판독 엔진(Claude Vision) 사용 시에만 필요. 오프라인 실행에는 불필요.
+anthropic==1.6.0

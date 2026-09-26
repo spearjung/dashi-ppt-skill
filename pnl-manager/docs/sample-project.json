@@ -1,0 +1,37 @@
+{
+  "name": "KOR01434 손익관리 고도화",
+  "client": "가상 고객사",
+  "engagement_code": "KOR01434",
+  "contract_type": "fixed_price",
+  "ep": "EP",
+  "em": "EM",
+  "start_date": "2025-05-01",
+  "end_date": "2025-12-31",
+  "currency": "KRW",
+  "contracts": [
+    {
+      "seq": 0,
+      "amount": 238000000,
+      "valid_from": "2025-05-01",
+      "valid_to": "2025-10-31",
+      "wbs_list": [
+        {
+          "code": "KOR01434-01-01",
+          "name": "1차 계약 WBS"
+        }
+      ]
+    },
+    {
+      "seq": 1,
+      "amount": 50000000,
+      "valid_from": "2025-11-01",
+      "valid_to": "2025-12-31",
+      "wbs_list": [
+        {
+          "code": "KOR01434-01-02",
+          "name": "2차 변경계약 WBS"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+# Render 배포 설정(대안). 비밀값은 대시보드에서 입력한다.
+services:
+  - type: web
+    name: pnl-manager
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    region: singapore
+    healthCheckPath: /api/health
+    # 캡처 원본이 파일로 저장되므로 디스크가 필요하다.
+    disk:
+      name: pnl-data
+      mountPath: /data
+      sizeGB: 3
+    envVars:
+      - key: PNL_SECURE_COOKIES
+        value: "1"
+      - key: PNL_DATA_DIR
+        value: /data
+      - key: PNL_CORS_ORIGINS
+        value: ""
+      - key: PNL_OCR_PROVIDER
+        value: claude
+      - key: PNL_APP_PASSWORD
+        sync: false          # 대시보드에서 입력(12자 이상)
+      - key: PNL_SECRET_KEY
+        generateValue: true
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: PNL_DATABASE_URL
+        fromDatabase:
+          name: pnl-db
+          property: connectionString
+
+databases:
+  - name: pnl-db
+    databaseName: pnl
+    user: pnl
+    plan: basic-256mb
+    region: singapore

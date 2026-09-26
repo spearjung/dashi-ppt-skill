@@ -1,0 +1,42 @@
+# Fly.io 배포 설정. 앱 이름은 `fly launch --no-deploy` 로 생성한 뒤 맞춘다.
+app = "pnl-manager"
+primary_region = "nrt"   # 도쿄. 국내 접속 지연이 가장 낮다.
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PNL_SECURE_COOKIES = "1"
+  PNL_DATA_DIR = "/data"
+  PNL_CORS_ORIGINS = ""
+  PNL_OCR_PROVIDER = "claude"
+
+# 캡처 원본이 파일로 저장되므로 영속 볼륨이 필요하다.
+# fly volumes create pnl_data --size 3 --region nrt
+[[mounts]]
+  source = "pnl_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  # 세션과 업로드 파일이 로컬 디스크에 있으므로 단일 머신으로 운영한다.
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 40
+    hard_limit = 80
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "20s"
+  method = "GET"
+  path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"

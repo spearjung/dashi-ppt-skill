@@ -1,0 +1,79 @@
+{
+  "screen_type": "wip",
+  "screen_title": "Work In Progress (단위: 원)",
+  "as_of_date": "2025-12-31",
+  "unit": "KRW",
+  "rows": [
+    {
+      "row_index": 1,
+      "wbs_code": {
+        "value": "KOR01434-01-01-01-1000",
+        "confidence": "high"
+      },
+      "period": {
+        "from": "2025-05-01",
+        "to": "2025-10-31"
+      },
+      "value_basis": "period",
+      "fields": [
+        {
+          "item_type": "time",
+          "raw_label": "Time",
+          "amount": 263746000,
+          "confidence": "high"
+        },
+        {
+          "item_type": "expense",
+          "raw_label": "Expense",
+          "amount": 6216247,
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "row_index": 2,
+      "wbs_code": {
+        "value": "KOR01434-01-01-01-1000",
+        "confidence": "high"
+      },
+      "period": {
+        "from": "2025-11-01",
+        "to": "2025-12-31"
+      },
+      "value_basis": "period",
+      "fields": [
+        {
+          "item_type": "time",
+          "raw_label": "Time",
+          "amount": 8030000,
+          "confidence": "high"
+        },
+        {
+          "item_type": "expense",
+          "raw_label": "Expense",
+          "amount": 1865867,
+          "confidence": "high"
+        }
+      ]
+    }
+  ],
+  "totals": [
+    {
+      "raw_label": "Total",
+      "amount": 269962247,
+      "row_index": 1
+    },
+    {
+      "raw_label": "Total",
+      "amount": 9895867,
+      "row_index": 2
+    }
+  ],
+  "arithmetic_checks": [
+    {
+      "rule": "time+expense=total",
+      "passed": true,
+      "diff": 0
+    }
+  ]
+}
